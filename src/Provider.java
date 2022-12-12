@@ -3,9 +3,8 @@ import java.util.Date;
 import java.util.List;
 
 public class Provider extends Agent {
-    private List<Ticket> tickets;
-    // preferences
-    private Date saleOfferingDate;
+    private List<Ticket> tickets; // les billets à vendre
+    private List<Buyer> buyers;
 
     private List<Offer> offers; // historique des négociations
 
