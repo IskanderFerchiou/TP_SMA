@@ -1,6 +1,5 @@
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class Buyer extends Agent {
     private int id;

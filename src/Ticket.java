@@ -1,26 +1,26 @@
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Ticket {
     private Date departureDate;
     private Date arrivalDate;
     private String departurePlace;
     private String arrivalPlace;
-    private float price;
-    private Provider provider;
-    private List<Ticket> offerBuyerHistory;
-    private List<Ticket> offerProviderHistory;
+
+    // contraintes et préférences du vendeur
+    private int preferedProvidingPrice; // prix désiré de vente du vendeur
+    private int minimumProvidingPrice; // prix minimum de vente du vendeur
+    private Date preferedProvidingDate; // date de vente désirée du vendeur
+    private Date latestProvidingDate; // date de vente au plus tard du vendeur
 
     public Ticket (Date departureDate, Date arrivalDate, String departurePlace, String arrivalPlace, float price, Provider provider) {
         this.departureDate = departureDate;
         this.arrivalDate = arrivalDate;
         this.departurePlace = departurePlace;
         this.arrivalPlace = arrivalPlace;
-        this.price = price;
-        this.provider = provider;
-        this.offerBuyerHistory = new ArrayList<>();
-        this.offerProviderHistory = new ArrayList<>();
+        this.preferedProvidingPrice = preferedProvidingPrice;
+        this.minimumProvidingPrice = minimumProvidingPrice;
+        this.preferedProvidingDate = preferedProvidingDate;
+        this.latestProvidingDate = latestProvidingDate;
     }
 
     public Date getDepartureDate() {
@@ -71,31 +71,11 @@ public class Ticket {
         this.provider = provider;
     }
 
-    public void addOfferBuyer(Ticket ticket) {
-        this.offerBuyerHistory.add(ticket);
+    public int getMinimumProvidingPrice() {
+        return this.minimumProvidingPrice;
     }
 
-    public boolean removeOfferBuyer(Ticket ticket) {
-        try {
-            this.offerBuyerHistory.remove(ticket);
-            return true;
-        } catch (Exception e) {
-            System.out.println(e);
-            return false;
-        }
-    }
-
-    public void addOfferProvider(Ticket ticket) {
-        this.offerProviderHistory.add(ticket);
-    }
-
-    public boolean removeOfferProvider(Ticket ticket) {
-        try {
-            this.offerProviderHistory.remove(ticket);
-            return true;
-        } catch (Exception e) {
-            System.out.println(e);
-            return false;
-        }
+    public void setMinimumProvidingPrice(int minimumProvidingPrice) {
+        this.minimumProvidingPrice = minimumProvidingPrice;
     }
 }
