@@ -3,7 +3,8 @@ import java.util.Date;
 import java.util.List;
 
 public class Buyer extends Agent {
-    private int id;
+    private List<Provider> providers; // les acheteurs connaissent tous les fournisseurs
+    private List<Offer> offers; // historique des négociations
     private String destination;
 
     // contraintes
