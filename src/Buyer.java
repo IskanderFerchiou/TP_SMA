@@ -111,13 +111,31 @@ public class Buyer extends Agent {
     }
 
     public Response checkConstraint(Offer offer) {
-        if(offer.getPrice() > this.maximumBudget)
-            return Response.BUDGET_NOT_ENOUGH;
-        if (offer.getOfferDate().after(this.latestBuyingDate))
-            return Response.DATE_TOO_LATE;
         if(rejectedProviders.contains(offer.getProvider()))
             return Response.PROVIDER_REJECTED;
+        if (offer.getOfferDate().after(this.latestBuyingDate))
+            return Response.DATE_TOO_LATE;
+        if(offer.getPrice() > this.maximumBudget)
+            return Response.BUDGET_NOT_ENOUGH;
 
         return Response.VALID_CONSTRAINTS;
+    }
+
+    public int calculatePrice() {
+        int buyerPrice;
+        // Première offre de l'acheteur : il propose en fonction de son budget maximum
+        if (this.getOffers().size() == 0) {
+            buyerPrice = this.maximumBudget - (int)(0.2 * this.maximumBudget);
+            // A partir de la deuxième offre, il regarde sa dernière proposition et augmente le prix sans dépasser son budget
+        } else {
+            Offer lastBuyerOffer = this.getOffers().get(this.getOffers().size()-1);
+
+            // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
+            buyerPrice = lastBuyerOffer.getPrice() + (int)(lastBuyerOffer.getPrice() * 0.1);
+            if (buyerPrice > this.maximumBudget) {
+                buyerPrice = this.maximumBudget;
+            }
+        }
+        return buyerPrice;
     }
 }

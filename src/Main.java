@@ -8,14 +8,12 @@ public class Main {
         // Initialisation des billets
         Ticket ticket1 = new Ticket(
                 provider1,
-                new Date(2022, 12, 9),
-                new Date(2022, 12, 10),
                 "Paris",
                 "Tokyo",
                 1000,
                 800,
-                new Date(2022, 10, 10),
-                new Date(2022, 12, 3)
+                new Date(2022, 11, 7),
+                new Date(2022, 11, 10)
         );
         provider1.addTicket(ticket1);
 
@@ -23,65 +21,62 @@ public class Main {
         Buyer buyer1 = new Buyer(
                 "Tokyo",
                 800,
-                new Date(2022, 12, 8),
-                new Date(2022, 12, 6)
+                new Date(2022, 11, 9),
+                new Date(2022, 11, 6)
         );
         buyer1.addProvider(provider1);
 
-        double negociation = 0.2;
+        // Date de la première offre
+        Date offerDate = ticket1.getPreferedProvidingDate();
 
-        boolean firstOffer = true;
-        int providerPrice = 0;
-
+        // les négociations entre fournisseur et acheteur
         while(true) {
-            // la communication
-            Offer offer;
-            if (firstOffer) {
-                providerPrice = ticket1.getPreferedProvidingPrice();
-                firstOffer = false;
+            System.out.println("-------------------");
+            System.out.println("Jour de négociation : " + offerDate);
 
-                offer = new Offer(provider1, buyer1, ticket1, providerPrice);
-                System.out.println("Offre Provider : " + offer.getPrice());
-            } else {
-                Offer lastBuyerOffer = buyer1.getOffers().get(buyer1.getOffers().size()-1);
-                Offer lastProviderOffer = provider1.getOffers().get(provider1.getOffers().size()-1);
+            // Calcul du nouveau prix selon le ticket et la dernière offre du provider
+            int providerPrice = provider1.calculatePrice(ticket1);
 
-                providerPrice = lastProviderOffer.getPrice() - (int)(lastProviderOffer.getPrice() * 0.1);
-                if (providerPrice < ticket1.getMinimumProvidingPrice()) {
-                    providerPrice = ticket1.getMinimumProvidingPrice();
-                }
-
-                offer = new Offer(provider1, buyer1, ticket1, providerPrice);
-                System.out.println("Offre Provider : " + offer.getPrice());
-            }
+            Offer offer = new Offer(provider1, buyer1, ticket1, providerPrice, offerDate);
+            System.out.println("Offre Provider : " + offer.getPrice());
 
             provider1.addOffer(offer);
 
+            // L'acheteur étudie l'offre selon ses contraintes et répond au fournisseur
             Response buyerResponse = buyer1.checkConstraint(offer);
             offer.setResponse(buyerResponse);
 
+            // si les contraintes sont validés, l'acheteur achète le ticket
             if(buyerResponse == Response.VALID_CONSTRAINTS) {
-                break; // achat du ticket (toutes les contraintes sont validées)
+                System.out.println("Le client a acheté le ticket.");
+                break;
+            } else if (buyerResponse == Response.DATE_TOO_LATE) {
+                System.out.println("Dernière date d'achat maximum pour l'acheteur écoulée (" + buyer1.getLatestBuyingDate() + ")");
+                break;
+            // sinon, l'acheteur négocie le prix en fonction de son budget maximum
             } else {
                 if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
-                    int budget = buyer1.getMaximumBudget();
-                    int newPrice = budget - (int)(negociation * budget);
+                    int buyerPrice = buyer1.calculatePrice();
 
-                    // à chaque offre de l'acheteur, on augmente sa proposition
-                    if (negociation > 0) {
-                        negociation = negociation - negociation/2;
-                    }
-
-                    offer = new Offer(provider1, buyer1, ticket1, newPrice);
+                    offer = new Offer(provider1, buyer1, ticket1, buyerPrice, offerDate);
                     System.out.println("Offre Buyer : " + offer.getPrice());
 
                     buyer1.addOffer(offer);
 
+                    // Réponse du fournisseur en fonction de ses contraintes
                     Response providerResponse = provider1.checkConstraint(offer);
                     offer.setResponse(providerResponse);
 
+                    // si toutes les contraintes sont validées, le fournisseur vend le ticket à l'acheteur, sinon on boucle
                     if (providerResponse == Response.VALID_CONSTRAINTS) {
-                        break; // vente du ticket (toutes les contraintes sont validées)
+                        System.out.println("Le vendeur a vendu le ticket.");
+                        break;
+                    } else if (providerResponse == Response.DATE_TOO_LATE) {
+                        System.out.println("Dernier jour de vente (" + ticket1.getLatestProvidingDate() + ") terminé.");
+                        break;
+                    // on passe au lendemain (le fournisseur fait 1 offre par jour)
+                    } else {
+                        offerDate = Utils.nextDay(offerDate);
                     }
                 }
             }

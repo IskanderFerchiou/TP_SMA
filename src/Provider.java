@@ -41,10 +41,28 @@ public class Provider extends Agent {
 
     public Response checkConstraint (Offer offer) {
         Ticket ticket = offer.getTicket();
-        if(offer.getPrice() < ticket.getMinimumProvidingPrice())
-            return Response.PRICE_TOO_LOW;
-        if (offer.getOfferDate().after(ticket.getLatestProvidingDate()))
+        if (offer.getOfferDate().equals(ticket.getLatestProvidingDate()))
             return Response.DATE_TOO_LATE;
+        if (offer.getPrice() < ticket.getMinimumProvidingPrice())
+            return Response.PRICE_TOO_LOW;
         return Response.VALID_CONSTRAINTS;
+    }
+
+    public int calculatePrice(Ticket ticket) {
+        int providerPrice;
+        // Première offre : le fournisseur fait une offre avec son prix de vente souhaité
+        if (this.getOffers().size() == 0) {
+            providerPrice = ticket.getPreferedProvidingPrice();
+            // A partir de la deuxième offre : on diminue le prix en fonction de la dernière offre du fournisseur
+        } else {
+            Offer lastProviderOffer = this.getOffers().get(this.getOffers().size()-1);
+
+            // si le nouveau prix calculé est en dessous du prix de vente minimum, on prend le prix de vente minimum
+            providerPrice = lastProviderOffer.getPrice() - (int)(lastProviderOffer.getPrice() * 0.1);
+            if (providerPrice < ticket.getMinimumProvidingPrice()) {
+                providerPrice = ticket.getMinimumProvidingPrice();
+            }
+        }
+        return providerPrice;
     }
 }

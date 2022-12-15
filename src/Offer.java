@@ -10,10 +10,10 @@ public class Offer {
 
     private int price;
 
-    public Offer(Provider provider, Buyer buyer, Ticket ticket, int price) {
+    public Offer(Provider provider, Buyer buyer, Ticket ticket, int price, Date date) {
         this.provider = provider;
         this.buyer = buyer;
-        this.offerDate = new Date();
+        this.offerDate = date;
         this.ticket = ticket;
         this.price = price;
     }
