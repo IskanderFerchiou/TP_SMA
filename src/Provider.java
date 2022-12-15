@@ -41,10 +41,14 @@ public class Provider extends Agent {
 
     public Response checkConstraint (Offer offer) {
         Ticket ticket = offer.getTicket();
-        if (offer.getOfferDate().equals(ticket.getLatestProvidingDate()))
+        if (offer.getOfferDate().equals(ticket.getLatestProvidingDate())) {
+            System.out.println("Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.");
             return Response.DATE_TOO_LATE;
-        if (offer.getPrice() < ticket.getMinimumProvidingPrice())
+        }
+        if (offer.getPrice() < ticket.getMinimumProvidingPrice()){
             return Response.PRICE_TOO_LOW;
+        }
+        System.out.println("Le vendeur a vendu le ticket.");
         return Response.VALID_CONSTRAINTS;
     }
 

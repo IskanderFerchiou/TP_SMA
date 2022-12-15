@@ -113,11 +113,14 @@ public class Buyer extends Agent {
     public Response checkConstraint(Offer offer) {
         if(rejectedProviders.contains(offer.getProvider()))
             return Response.PROVIDER_REJECTED;
-        if (offer.getOfferDate().after(this.latestBuyingDate))
+        if (offer.getOfferDate().after(this.latestBuyingDate)){
+            System.out.println("Dernière date d'achat maximum pour l'acheteur écoulée (" + this.getLatestBuyingDate() + ")");
             return Response.DATE_TOO_LATE;
+        }
         if(offer.getPrice() > this.maximumBudget)
             return Response.BUDGET_NOT_ENOUGH;
 
+        System.out.println("Le client a acheté le ticket.");
         return Response.VALID_CONSTRAINTS;
     }
 

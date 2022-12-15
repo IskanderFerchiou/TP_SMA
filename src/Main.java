@@ -42,7 +42,7 @@ public class Main {
         Date offerDate = ticket1.getPreferedProvidingDate();
 
         // les négociations entre fournisseur et acheteur
-        while(true) {
+        while (true) {
             System.out.println("-------------------");
             System.out.println("Jour de négociation : " + offerDate);
 
@@ -58,39 +58,28 @@ public class Main {
             Response buyerResponse = buyer1.checkConstraint(offer);
             offer.setResponse(buyerResponse);
 
-            // si les contraintes sont validés, l'acheteur achète le ticket
-            if(buyerResponse == Response.VALID_CONSTRAINTS) {
-                System.out.println("Le client a acheté le ticket.");
-                break;
-            } else if (buyerResponse == Response.DATE_TOO_LATE) {
-                System.out.println("Dernière date d'achat maximum pour l'acheteur écoulée (" + buyer1.getLatestBuyingDate() + ")");
-                break;
-            // sinon, l'acheteur négocie le prix en fonction de son budget maximum
-            } else {
-                if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
-                    int buyerPrice = buyer1.calculatePrice();
+            // si le prix est trop bas, on continue les offres sinon on arrête la négociation car l'achat a été effectué ou une contrainte majeur n'a pas été respecté
+            if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
+                int buyerPrice = buyer1.calculatePrice();
 
-                    offer = new Offer(provider1, buyer1, ticket1, buyerPrice, offerDate);
-                    System.out.println("Offre Buyer : " + offer.getPrice());
+                offer = new Offer(provider1, buyer1, ticket1, buyerPrice, offerDate);
+                System.out.println("Offre Buyer : " + offer.getPrice());
 
-                    buyer1.addOffer(offer);
+                buyer1.addOffer(offer);
 
-                    // Réponse du fournisseur en fonction de ses contraintes
-                    Response providerResponse = provider1.checkConstraint(offer);
-                    offer.setResponse(providerResponse);
+                // Réponse du fournisseur en fonction de ses contraintes
+                Response providerResponse = provider1.checkConstraint(offer);
+                offer.setResponse(providerResponse);
 
-                    // si toutes les contraintes sont validées, le fournisseur vend le ticket à l'acheteur, sinon on boucle
-                    if (providerResponse == Response.VALID_CONSTRAINTS) {
-                        System.out.println("Le vendeur a vendu le ticket.");
-                        break;
-                    } else if (providerResponse == Response.DATE_TOO_LATE) {
-                        System.out.println("Dernier jour de vente (" + ticket1.getLatestProvidingDate() + ") terminé.");
-                        break;
+                // si le prix est trop bas, on continue les offres sinon on arrête la négociation car la vente a été effectué ou une contrainte majeur n'a pas été respecté
+                if (providerResponse == Response.PRICE_TOO_LOW) {
                     // on passe au lendemain (le fournisseur fait 1 offre par jour)
-                    } else {
-                        offerDate = Utils.nextDay(offerDate);
-                    }
+                    offerDate = Utils.nextDay(offerDate);
+                } else {
+                    break;
                 }
+            } else {
+                break;
             }
         }
     }
