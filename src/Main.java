@@ -1,9 +1,21 @@
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class Main {
+    public static List<Provider> instantiateProviders(int count) {
+        List providers = new ArrayList();
+        for (int i = 0; i < count; i++) {
+            providers.add(new Provider());
+        }
+        return providers;
+    }
+
     public static void main(String[] args) {
         // Initialisation des fournisseurs
         Provider provider1 = new Provider();
+        List providers = instantiateProviders(5);
 
         // Initialisation des billets
         Ticket ticket1 = new Ticket(

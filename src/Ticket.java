@@ -3,8 +3,6 @@ import java.util.Date;
 public class Ticket {
     private Provider provider;
 
-    private Date departureDate;
-    private Date arrivalDate;
     private String departurePlace;
     private String arrivalPlace;
 
@@ -14,10 +12,8 @@ public class Ticket {
     private Date preferedProvidingDate; // date de vente désirée du vendeur
     private Date latestProvidingDate; // date de vente au plus tard du vendeur
 
-    public Ticket (Provider provider, Date departureDate, Date arrivalDate, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, Date preferedProvidingDate, Date latestProvidingDate) {
+    public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, Date preferedProvidingDate, Date latestProvidingDate) {
         this.provider = provider;
-        this.departureDate = departureDate;
-        this.arrivalDate = arrivalDate;
         this.departurePlace = departurePlace;
         this.arrivalPlace = arrivalPlace;
         this.preferedProvidingPrice = preferedProvidingPrice;
@@ -32,22 +28,6 @@ public class Ticket {
 
     public void setProvider(Provider provider) {
         this.provider = provider;
-    }
-
-    public Date getDepartureDate() {
-        return departureDate;
-    }
-
-    public void setDepartureDate(Date departureDate) {
-        this.departureDate = departureDate;
-    }
-
-    public Date getArrivalDate() {
-        return arrivalDate;
-    }
-
-    public void setArrivalDate(Date arrivalDate) {
-        this.arrivalDate = arrivalDate;
     }
 
     public String getDeparturePlace() {
