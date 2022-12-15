@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Main {
     public static List<Provider> instantiateProviders(int count) {
-        List providers = new ArrayList();
+        List<Provider> providers = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             providers.add(new Provider());
         }
@@ -15,7 +15,11 @@ public class Main {
     public static void main(String[] args) {
         // Initialisation des fournisseurs
         Provider provider1 = new Provider();
-        List providers = instantiateProviders(5);
+        List<Provider> providers = instantiateProviders(5);
+        List<Ticket> tickets = Utils.instantiateTickets(providers);
+        System.out.println("test");
+        tickets.forEach(ticket -> System.out.println(ticket.getDeparturePlace()));
+        System.out.println("test");
 
         // Initialisation des billets
         Ticket ticket1 = new Ticket(
