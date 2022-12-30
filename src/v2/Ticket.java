@@ -1,6 +1,7 @@
 package v2;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Ticket {
     private Provider provider;
@@ -14,7 +15,7 @@ public class Ticket {
     private Date preferedProvidingDate; // date de vente désirée du vendeur
     private Date latestProvidingDate; // date de vente au plus tard du vendeur
 
-    private boolean available;
+    private final AtomicBoolean available;
 
     public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, Date preferedProvidingDate, Date latestProvidingDate) {
         this.provider = provider;
@@ -24,7 +25,7 @@ public class Ticket {
         this.minimumProvidingPrice = minimumProvidingPrice;
         this.preferedProvidingDate = preferedProvidingDate;
         this.latestProvidingDate = latestProvidingDate;
-        this.available = true;
+        this.available = new AtomicBoolean(true);
     }
 
     public Provider getProvider() {
@@ -83,11 +84,11 @@ public class Ticket {
         this.latestProvidingDate = latestProvidingDate;
     }
 
-    public boolean isAvailable() {
-        return available;
+    public boolean isNotAvailable() {
+        return !available.get();
     }
 
-    public void setAvailable(boolean available) {
-        this.available = available;
+    public void setAvailable(Boolean available) {
+        this.available.set(available);
     }
 }

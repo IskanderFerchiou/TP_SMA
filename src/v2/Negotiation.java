@@ -8,6 +8,8 @@ public class Negotiation implements Runnable {
     private final Provider provider;
     private final Buyer buyer;
 
+    private Date finalDate;
+
     private NegotiationStatus status;
 
     public Negotiation(Ticket ticket, Buyer buyer, Provider provider) {
@@ -15,14 +17,26 @@ public class Negotiation implements Runnable {
         this.buyer = buyer;
         this.ticket = ticket;
         this.status = NegotiationStatus.RUNNING;
+        this.finalDate = new Date();
     }
 
     public NegotiationStatus getStatus() {
         return status;
     }
 
+    public Date getFinalDate() {
+        return finalDate;
+    }
+
     @Override
     public void run() {
+
+        try {
+            Thread.sleep(Thread.currentThread().getId() * 100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         int maximumNumberOfOffers = 6; // limite
 
         // date de la première offre
@@ -30,14 +44,14 @@ public class Negotiation implements Runnable {
         Offer offer;
 
         // première proposition de l'acheteur
-        int buyerPrice = buyer.calculatePrice();
+        int buyerPrice = buyer.calculatePrice(ticket);
         offer = new Offer(provider, buyer, ticket, buyerPrice, offerDate);
         buyer.send(provider, offer);
         int numberOfOffers = 1; // compteur
 
         while (true) {
             // avant de réagir à l'offre de l'acheteur, on vérifie si le ticket est toujours disponible
-            if (!ticket.isAvailable()) {
+            if (ticket.isNotAvailable()) {
                 System.out.println("Negotiation " + Thread.currentThread().getId() + " : le ticket a été vendu à un autre acheteur.");
                 this.status = NegotiationStatus.FAILURE;
                 break;
@@ -77,7 +91,7 @@ public class Negotiation implements Runnable {
             }
 
             // avant de réagir à l'offre du vendeur, on vérifie si le ticket est toujours disponible
-            if (!ticket.isAvailable()) {
+            if (ticket.isNotAvailable()) {
                 System.out.println("Negotiation " + Thread.currentThread().getId() + " : le ticket a été vendu à un autre acheteur.");
                 this.status = NegotiationStatus.FAILURE;
                 break;
@@ -89,7 +103,7 @@ public class Negotiation implements Runnable {
 
             // si le prix est trop bas, on continue les offres.
             if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
-                buyerPrice = buyer.calculatePrice();
+                buyerPrice = buyer.calculatePrice(ticket);
                 offer = new Offer(provider, buyer, ticket, buyerPrice, offerDate);
                 buyer.send(provider, offer);
                 numberOfOffers++;
@@ -106,5 +120,7 @@ public class Negotiation implements Runnable {
                 break;
             }
         }
+        // date de fin des négociations pour mettre à jour la date actuelle du point de vue du buyer
+        this.finalDate = offerDate;
     }
 }

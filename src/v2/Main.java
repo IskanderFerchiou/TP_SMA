@@ -20,6 +20,9 @@ public class Main {
         // Initialisation du catalogue
         BlockingQueue<Ticket> catalogue = new LinkedBlockingQueue<>();
 
+        // Date actuelle
+        Date actualDate = new Date(2022, 11, 1);
+
         // Initialisation des fournisseurs
         List<Provider> providers = new ArrayList<>();
         for (int i = 0; i < 1; i++) {
@@ -33,26 +36,28 @@ public class Main {
                 900,
                 new Date(2022, 11, 9),
                 new Date(2022, 11, 6),
-                catalogue
+                catalogue,
+                actualDate
         );
         Buyer buyer2 = new Buyer(
                 "Tokyo",
                 800,
                 new Date(2022, 11, 15),
                 new Date(2022, 11, 6),
-                catalogue
+                catalogue,
+                actualDate
         );
         buyers.add(buyer1);
         buyers.add(buyer2);
 
-        for (Buyer b: buyers) {
-            Thread buyerThread = new Thread(b);
-            buyerThread.start();
-        }
-
         for (Provider p: providers) {
             Thread providerThread = new Thread(p);
             providerThread.start();
+        }
+
+        for (Buyer b: buyers) {
+            Thread buyerThread = new Thread(b);
+            buyerThread.start();
         }
 
     }
