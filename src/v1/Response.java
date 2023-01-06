@@ -1,3 +1,5 @@
+package v1;
+
 public enum Response {
     BUDGET_NOT_ENOUGH,
     PRICE_TOO_LOW,
