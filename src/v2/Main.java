@@ -57,9 +57,10 @@ public class Main {
 //        buyers.add(buyer1);
 //        buyers.add(buyer2);
 
-        String scenario = "4";
+        String scenario = "2";
+        NegotiationStrat strat = NegotiationStrat.DEFAULT;
         List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, latch);
-        List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue);
+        List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue, strat);
         Utils.instantiateTickets("Tickets" + scenario + ".csv", providers);
 
         for (Provider p: providers) {

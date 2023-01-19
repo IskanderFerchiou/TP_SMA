@@ -1,6 +1,8 @@
 package v2;
 
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class Negotiation implements Runnable {
 
@@ -12,12 +14,15 @@ public class Negotiation implements Runnable {
 
     private NegotiationStatus status;
 
-    public Negotiation(Ticket ticket, Buyer buyer, Provider provider) {
+    private CountDownLatch latch;
+
+    public Negotiation(Ticket ticket, Buyer buyer, Provider provider, CountDownLatch latch) {
         this.provider = provider;
         this.buyer = buyer;
         this.ticket = ticket;
         this.status = NegotiationStatus.RUNNING;
         this.finalDate = new Date();
+        this.latch = latch;
     }
 
     public NegotiationStatus getStatus() {
@@ -27,6 +32,11 @@ public class Negotiation implements Runnable {
     public Date getFinalDate() {
         return finalDate;
     }
+
+    public Provider getProvider() {
+        return provider;
+    }
+
 
     public boolean isTicketNotAvailable() {
         if (ticket.isNotAvailable()) {
@@ -48,8 +58,39 @@ public class Negotiation implements Runnable {
         return ticket;
     }
 
+    public void displayDiscussion() {
+        String discussion = "";
+
+        List<Offer> providerReceivedOffers = this.provider.getOffers();
+        List<Offer> buyerReceivedOffers = this.buyer.getOffers();
+
+        providerReceivedOffers = providerReceivedOffers.stream().filter(offer -> offer.getBuyer().equals(this.buyer)).toList();
+        buyerReceivedOffers = buyerReceivedOffers.stream().filter(offer -> offer.getProvider().equals(this.provider)).toList();
+
+        discussion += "------ Historique de la négociation " + Thread.currentThread().getId() + " ------ \n";
+
+        for (int i = 0; i < Math.max(providerReceivedOffers.size(), buyerReceivedOffers.size()); i++) {
+
+            if (providerReceivedOffers.size() > i) {
+                discussion += providerReceivedOffers.get(0) + "\n";
+            }
+
+            if (buyerReceivedOffers.size() > i) {
+                discussion += buyerReceivedOffers.get(0) + "\n";
+            }
+        }
+        discussion += "------------------------------------------";
+
+        System.out.println(discussion);
+    }
+
     @Override
     public void run() {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         int maximumNumberOfOffers = 6; // limite
 
@@ -80,7 +121,7 @@ public class Negotiation implements Runnable {
                     break;
                 } else {
                     // calcul du nouveau prix selon le ticket et la dernière offre du provider
-                    int providerPrice = provider.calculatePrice(ticket);
+                    int providerPrice = provider.calculatePrice(ticket, offerDate);
                     offer = new Offer(provider, buyer, ticket, providerPrice, offerDate);
                     provider.send(buyer, offer);
 
@@ -143,5 +184,6 @@ public class Negotiation implements Runnable {
         }
         // date de fin des négociations pour mettre à jour la date actuelle du point de vue du buyer
         this.finalDate = offerDate;
+        displayDiscussion();
     }
 }

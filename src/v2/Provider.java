@@ -9,9 +9,9 @@ import java.util.concurrent.BlockingQueue;
 public class Provider extends Agent {
     private final List<Ticket> tickets; // les billets à vendre
     private List<Buyer> buyers;
-    private BlockingQueue<Ticket> catalogue;
-
     private HashMap<Ticket, Offer> bestOffers;
+
+    private NegotiationStrat strat;
 
     private Integer id;
 
@@ -20,12 +20,13 @@ public class Provider extends Agent {
         this.tickets = new ArrayList<>();
     }
 
-    public Provider(Integer id, BlockingQueue<Ticket> catalogue) {
+    public Provider(Integer id, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) {
         super();
         this.id = id;
         this.tickets = new ArrayList<>();
         this.catalogue = catalogue;
         this.bestOffers = new HashMap<>();
+        this.strat = strat;
     }
 
     public Integer getId() {
@@ -66,20 +67,43 @@ public class Provider extends Agent {
         return Response.VALID_CONSTRAINTS;
     }
 
-    public int calculatePrice(Ticket ticket) {
-        int providerPrice;
+    public NegotiationStrat getStrat() {
+        return strat;
+    }
+
+    public void setStrat(NegotiationStrat strat){
+        this.strat = strat;
+    }
+
+    public int calculatePrice(Ticket ticket, Date actualDate) {
+        int providerPrice = 0;
         Offer bestOffer = this.bestOffers.get(ticket);
         // Première offre : le fournisseur fait une offre avec son prix de vente souhaité
         if (bestOffer == null) {
             providerPrice = ticket.getPreferedProvidingPrice();
-            // A partir de la deuxième offre : on diminue le prix en fonction de la meilleur offre d'un acheteur sur le ticket
         } else {
-            // si le nouveau prix calculé est en dessous du prix de vente minimum, on prend le prix de vente minimum
-            providerPrice = bestOffer.getPrice() + (int)(bestOffer.getPrice() * 0.1);
+            if(this.strat == NegotiationStrat.DEFAULT){
+                // si le nouveau prix calculé est en dessous du prix de vente minimum, on prend le prix de vente minimum
+                providerPrice = bestOffer.getPrice() + (int)(bestOffer.getPrice() * 0.1);
+
+            } else if (this.strat == NegotiationStrat.REMAINING_TIME){
+                if(ticket.getRemainingDays(actualDate) < 5) {
+                    providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.07);
+                } else {
+                    providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.1);
+                }
+            } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY){
+                if(findSimilarTickets(ticket).size() > 3) {
+                    providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.07);
+                } else {
+                    providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.1);
+                }
+            }
             if (providerPrice < ticket.getMinimumProvidingPrice()) {
                 providerPrice = ticket.getMinimumProvidingPrice();
             }
         }
+        // A partir de la deuxième offre : on diminue le prix en fonction de la meilleur offre d'un acheteur sur le ticket
         return providerPrice;
     }
 

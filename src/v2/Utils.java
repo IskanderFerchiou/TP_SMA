@@ -26,7 +26,7 @@ public class Utils {
         return c.getTime();
     }
 
-    public static List<Provider> instantiateProviders(String filename, BlockingQueue<Ticket> catalogue) throws FileNotFoundException {
+    public static List<Provider> instantiateProviders(String filename, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) throws FileNotFoundException {
         File file = new File("datasets/" + filename);
         List<Provider> providers = new ArrayList<>();
         if (file.exists()) {
@@ -34,7 +34,7 @@ public class Utils {
             BufferedReader br = new BufferedReader(reader);
             int totalProviders = (int) br.lines().count() - 1;
             for (int i = 0; i < totalProviders; i++) {
-                providers.add(new Provider(i, catalogue));
+                providers.add(new Provider(i, catalogue, strat));
             }
         }
         return providers;
@@ -62,6 +62,14 @@ public class Utils {
                         catalogue,
                         actualDate,
                         latch);
+
+                if (spllitedLine.length > 5 && spllitedLine[5] != null) {
+                    buyer.addPreferredProviderID(Integer.valueOf(spllitedLine[5]));
+                }
+
+                if (spllitedLine.length > 5 && spllitedLine[6] != null) {
+                    buyer.addRejectedProviderID(Integer.valueOf(spllitedLine[6]));
+                }
 
                 buyers.add(buyer);
             }

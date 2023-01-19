@@ -1,3 +1,3 @@
-﻿name;destination;maximumBudget;lastestBuyingDate;preferedBuyingDate
-Marie;tokyo;700;31/12/2023;01/01/2023
-Paul;paris;300;31/12/2023;01/01/2023
+﻿name;destination;maximumBudget;lastestBuyingDate;preferedBuyingDate;preferedProviders;rejectedProviders
+Marie;tokyo;700;31/12/2023;01/01/2023;0;1
+Paul;paris;300;31/12/2023;01/01/2023;2;3

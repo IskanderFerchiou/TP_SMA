@@ -67,4 +67,12 @@ public class Offer {
     public void setResponse(Response response) {
         this.response = response;
     }
+
+    @Override
+    public String toString() {
+        return "Offre (Prix : " + price +
+                ", Date : " + Utils.formatDate(offerDate) + ")";
+    }
+
+
 }

@@ -1,5 +1,7 @@
 package v2;
 
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -91,10 +93,31 @@ public class Ticket {
         this.available.set(available);
     }
 
+    public int getRemainingDays(Date actualDate) {
+        return (int)ChronoUnit.DAYS.between(actualDate.toInstant(), this.latestProvidingDate.toInstant());
+    }
+
+
     @Override
     public String toString() {
         return "Ticket (Fournisseur ID : " + provider.getId() +
                 ", Destination : " + arrivalPlace +
                 ", Prix de départ : " + preferedProvidingPrice + ")";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Ticket objTicket;
+        if(obj instanceof Ticket) {
+            objTicket = (Ticket)obj;
+            if(objTicket.departurePlace != this.departurePlace) {
+                return false;
+            }
+            if (objTicket.arrivalPlace != this.arrivalPlace) {
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 }
