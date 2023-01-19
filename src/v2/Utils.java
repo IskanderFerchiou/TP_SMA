@@ -1,66 +1,101 @@
 package v2;
 
+import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 public class Utils {
+
+    public static String formatDate(Date date) {
+        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+        return df.format(date);
+    }
+
     public static Date nextDay(Date date) {
         Calendar c = Calendar.getInstance();
         c.setTime(date);
         c.add(Calendar.DATE, 1);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
         return c.getTime();
     }
 
-    public static List<Ticket> instantiateTickets(List<Provider> providers) {
-        List<Ticket> tickets = new ArrayList<>();
-        Path pathToFile = Paths.get("datasets/firstDataset.csv");
+    public static List<Provider> instantiateProviders(String filename, BlockingQueue<Ticket> catalogue) throws FileNotFoundException {
+        File file = new File("datasets/" + filename);
+        List<Provider> providers = new ArrayList<>();
+        if (file.exists()) {
+            FileReader reader = new FileReader(file);
+            BufferedReader br = new BufferedReader(reader);
+            int totalProviders = (int) br.lines().count() - 1;
+            for (int i = 0; i < totalProviders; i++) {
+                providers.add(new Provider(i, catalogue));
+            }
+        }
+        return providers;
+    }
 
-        // create an instance of BufferedReader
-        // using try with resource, Java 7 feature to close resources
-        try (BufferedReader br = Files.newBufferedReader(pathToFile,
-                StandardCharsets.US_ASCII)) {
+    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch) throws IOException, ParseException {
+        File file = new File("datasets/" + filename);
+        List<Buyer> buyers = new ArrayList<>();
+        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 
-            // read the first line from the text file
-            String line = br.readLine();
+        if (file.exists()) {
+            FileReader reader = new FileReader(file);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            String [] spllitedLine;
+            br.readLine(); // avoid first line
+            while ((line = br.readLine()) != null)
+            {
+                spllitedLine = line.split(";");
+                Buyer buyer = new Buyer(spllitedLine[0],
+                        spllitedLine[1],
+                        Integer.parseInt(spllitedLine[2]),
+                        df.parse(spllitedLine[3]),
+                        df.parse(spllitedLine[4]),
+                        catalogue,
+                        actualDate,
+                        latch);
 
-            line = br.readLine();
+                buyers.add(buyer);
+            }
+        }
+        return buyers;
+    }
 
-            // loop until all lines are read
-            while (line != null) {
+    public static void instantiateTickets(String filename, List<Provider> providers) throws IOException, ParseException {
+        File file = new File("datasets/" + filename);
+        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+        if (file.exists()) {
+            FileReader reader = new FileReader(file);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            String [] spllitedLine;
+            br.readLine(); // avoid first line
+            while ((line = br.readLine()) != null)
+            {
+                spllitedLine = line.split(";");
+                Provider provider = providers.get(Integer.parseInt(spllitedLine[6]));
 
-                // use string.split to load a string array with the values from
-                // each line of
-                // the file, using a comma as the delimiter
-                String[] attributes = line.split(";");
-
-                Random rand = new Random();
                 Ticket ticket = new Ticket(
-                        providers.get(rand.nextInt(providers.size())), //provider
-                        attributes[0], //departurePlace
-                        attributes[1], //arrivalPlace
-                        Integer.parseInt(attributes[3]), //preferedProvidingPrice
-                        Integer.parseInt(attributes[2]), //minimumProvidingPrice
-                        new Date(attributes[5]), //preferedProvidingDate
-                        new Date(attributes[4]) //latestProvidingDate
+                        provider, // provider
+                        spllitedLine[0], // departurePlace
+                        spllitedLine[1], // arrivalPlace
+                        Integer.parseInt(spllitedLine[3]), // preferedProvidingPrice
+                        Integer.parseInt(spllitedLine[2]), // minimumProvidingPrice
+                        df.parse(spllitedLine[5]), // preferedProvidingDate
+                        df.parse(spllitedLine[4]) // latestProvidingDate
                 );
 
-                // adding ticket into ArrayList
-                tickets.add(ticket);
-
-                // read next line before looping
-                // if end of file reached, line would be null
-                line = br.readLine();
+                provider.addTicket(ticket);
             }
-
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
         }
 
-        return tickets;
     }
 }

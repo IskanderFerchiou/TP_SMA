@@ -15,7 +15,7 @@ public class Ticket {
     private Date preferedProvidingDate; // date de vente désirée du vendeur
     private Date latestProvidingDate; // date de vente au plus tard du vendeur
 
-    private final AtomicBoolean available;
+    private final AtomicBoolean available  = new AtomicBoolean(true);
 
     public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, Date preferedProvidingDate, Date latestProvidingDate) {
         this.provider = provider;
@@ -25,7 +25,6 @@ public class Ticket {
         this.minimumProvidingPrice = minimumProvidingPrice;
         this.preferedProvidingDate = preferedProvidingDate;
         this.latestProvidingDate = latestProvidingDate;
-        this.available = new AtomicBoolean(true);
     }
 
     public Provider getProvider() {
@@ -85,10 +84,17 @@ public class Ticket {
     }
 
     public boolean isNotAvailable() {
-        return !available.get();
+        return !this.available.get();
     }
 
     public void setAvailable(Boolean available) {
         this.available.set(available);
+    }
+
+    @Override
+    public String toString() {
+        return "Ticket (Fournisseur ID : " + provider.getId() +
+                ", Destination : " + arrivalPlace +
+                ", Prix de départ : " + preferedProvidingPrice + ")";
     }
 }

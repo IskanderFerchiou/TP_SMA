@@ -49,7 +49,6 @@ public class Provider extends Agent {
         if (offer.getPrice() < ticket.getMinimumProvidingPrice()){
             return Response.PRICE_TOO_LOW;
         }
-        System.out.println("Le vendeur a vendu le ticket.");
         return Response.VALID_CONSTRAINTS;
     }
 

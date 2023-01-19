@@ -2,39 +2,38 @@ package v2;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Buyer extends Agent {
-    private List<Provider> providers; // les acheteurs connaissent tous les fournisseur
+    private final List<Provider> providers; // les acheteurs connaissent tous les fournisseur
     private String destination;
+
+    private String name;
 
     // contraintes
     private int maximumBudget;
     private Date latestBuyingDate;
-    private List<Provider> rejectedProviders;
+    private final List<Provider> rejectedProviders;
 
     // preferences
     private Date preferedBuyingDate;
-    private List<Provider> preferredProviders;
+    private final List<Provider> preferredProviders;
 
-    private BlockingQueue<Ticket> catalogue;
+    private final BlockingQueue<Ticket> catalogue;
 
     private Date actualDate;
 
-    private HashMap<Ticket, Offer> bestOffers;
+    private final HashMap<Ticket, Offer> bestOffers;
+
+    private final AtomicBoolean available;
+
+    private CountDownLatch latch;
 
 
-    public Buyer(String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate) {
-        this.destination = destination;
-        this.maximumBudget = maximumBudget;
-        this.latestBuyingDate = latestBuyingDate;
-        this.preferedBuyingDate = preferedBuyingDate;
-        this.providers = new ArrayList<>();
-        this.rejectedProviders = new ArrayList<>();
-        this.preferredProviders = new ArrayList<>();
-    }
-
-    public Buyer(String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, BlockingQueue<Ticket> catalogue, Date actualDate) {
+    public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch) {
         super();
+        this.name = name;
         this.destination = destination;
         this.maximumBudget = maximumBudget;
         this.latestBuyingDate = latestBuyingDate;
@@ -45,6 +44,8 @@ public class Buyer extends Agent {
         this.catalogue = catalogue;
         this.actualDate = actualDate;
         this.bestOffers = new HashMap<>();
+        this.available = new AtomicBoolean(true);
+        this.latch = latch;
     }
 
 
@@ -116,6 +117,22 @@ public class Buyer extends Agent {
         this.preferredProviders.remove(provider);
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isAvailable() {
+        return available.get();
+    }
+
+    public void setAvailable(boolean available) {
+        this.available.set(available);
+    }
+
     public Response checkConstraint(Offer offer) {
         Ticket ticket = offer.getTicket();
         Offer bestOffer = this.bestOffers.get(ticket);
@@ -135,6 +152,8 @@ public class Buyer extends Agent {
     }
 
     public Response checkConstraint(Ticket ticket) {
+        if (!ticket.getArrivalPlace().equals(this.destination))
+            return Response.WRONG_DESTINATION;
         if (rejectedProviders.contains(ticket.getProvider()))
             return Response.PROVIDER_REJECTED;
         if (ticket.getPreferedProvidingDate().after(this.latestBuyingDate)) {
@@ -149,12 +168,12 @@ public class Buyer extends Agent {
     
     public int calculatePrice(Ticket ticket) {
         int buyerPrice;
+        Offer bestOffer = this.bestOffers.get(ticket);
         // Première offre de l'acheteur : il propose en fonction de son budget maximum
-        if (this.getOffers().size() == 0) {
+        if (bestOffer == null) {
             buyerPrice = this.maximumBudget - (int) (0.2 * this.maximumBudget);
             // A partir de la deuxième offre, il regarde la réponse du fournisseur et augmente le prix sans dépasser son budget
         } else {
-            Offer bestOffer = this.bestOffers.get(ticket);
 
             // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
             buyerPrice = bestOffer.getPrice() - (int) (bestOffer.getPrice() * 0.1);
@@ -167,16 +186,20 @@ public class Buyer extends Agent {
 
     @Override
     public void run() {
-        boolean available = true; // condition d'arrêt
-        List<Negotiation> negotiations = new ArrayList<>();
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         List<Ticket> seenTickets = new ArrayList<>();
         List<Ticket> addedTickets;
+        List<Negotiation> negotiations = new ArrayList<>();
 
-        while (available) {
+        while (isAvailable()) {
             // Si la date actuelle dépasse la date limite, l'acheteur n'est plus disponible
             if (this.actualDate.after(this.latestBuyingDate)) {
-                System.out.println("La date actuelle a dépassé la date limite.");
-                available = false;
+                System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(this.actualDate) + ") a dépassé la date limite.");
+                setAvailable(false);
                 break;
             }
 
@@ -188,11 +211,12 @@ public class Buyer extends Agent {
                 Response buyerResponse = this.checkConstraint(ticket);
 
                 seenTickets.add(ticket);
-                boolean startNegotiation = buyerResponse == Response.BUDGET_NOT_ENOUGH;
+                boolean startNegotiation = buyerResponse == Response.BUDGET_NOT_ENOUGH || buyerResponse == Response.VALID_CONSTRAINTS;
                 // on commence les négociations si la contrainte est uniquement lié au prix
                 if (startNegotiation) {
                     Negotiation nego = new Negotiation(ticket, this, ticket.getProvider());
                     negotiations.add(nego);
+
                     Thread negotiationThread = new Thread(nego);
                     negotiationThread.start();
                 }
@@ -201,27 +225,21 @@ public class Buyer extends Agent {
             // on vérifie l'état des négociations en cours
             for (Iterator<Negotiation> iterator = negotiations.iterator(); iterator.hasNext(); ) {
                 Negotiation n = iterator.next();
-                // si une négociation a échoué ou aboutit
+                // si une négociation a échoué
                 if (n.getStatus() != NegotiationStatus.RUNNING) {
                     // on prend uniquement la date de la négociation si elle est plus grande
                     if (n.getFinalDate().after(this.actualDate)) {
                         this.actualDate = n.getFinalDate();
-                    }
-                    if (n.getStatus() == NegotiationStatus.SUCCESS) {
-                        // on arrête la recherche de ticket si un achat a été effectué
-                        available = false;
-                        break;
                     }
                     // on retire la negociation de la liste des négociations en cours.
                     iterator.remove();
                 }
             }
 
-
             // Si aucune négociations n'est en cours et qu'aucun nouveau ticket n'a été ajouté, on passe au jour suivant
             if (negotiations.isEmpty() && addedTickets.isEmpty()) {
                 this.actualDate = Utils.nextDay(this.actualDate);
-                System.out.println(Thread.currentThread().getName() + " : pas de ticket sur le marché, J+1 => " + this.actualDate);
+                // System.out.println(Thread.currentThread().getName() + " : pas de ticket sur le marché, J+1 => " + Utils.formatDate(this.actualDate));
             }
         }
     }

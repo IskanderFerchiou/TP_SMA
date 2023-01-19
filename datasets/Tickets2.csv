@@ -1,0 +1,5 @@
+﻿departurePlace;arrivalPlace;minimumProvidingPrice;preferedProvidingPrice;latestProvidingPrice;preferedProvidingDate;provider
+paris;tokyo;750;800;31/12/2023;01/01/2023;0
+paris;tokyo;700;800;31/12/2023;01/01/2023;1
+paris;tokyo;600;650;31/12/2023;01/01/2023;2
+paris;tokyo;600;700;31/12/2023;01/01/2023;3
