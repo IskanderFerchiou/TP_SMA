@@ -1,5 +1,3 @@
-package v2;
-
 import java.util.Date;
 
 public class Offer {

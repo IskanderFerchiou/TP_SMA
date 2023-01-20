@@ -1,5 +1,3 @@
-package v2;
-
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;

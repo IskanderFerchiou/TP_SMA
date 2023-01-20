@@ -1,5 +1,3 @@
-package v2;
-
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
