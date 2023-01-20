@@ -95,39 +95,6 @@ public class Provider extends Agent {
         }
 
         return providerPrice;
-    }*/
-
-
-    public int calculatePrice(Ticket ticket, Date actualDate) {
-        int providerPrice = 0;
-        Offer bestOffer = this.bestOffers.get(ticket);
-        // Première offre : le fournisseur fait une offre avec son prix de vente souhaité
-        if (bestOffer == null) {
-            providerPrice = ticket.getPreferedProvidingPrice();
-        } else {
-        if(this.strat == NegotiationStrat.DEFAULT){
-            // si le nouveau prix calculé est en dessous du prix de vente minimum, on prend le prix de vente minimum
-            providerPrice = bestOffer.getPrice() + (int)(bestOffer.getPrice() * 0.1);
-
-        } else if (this.strat == NegotiationStrat.REMAINING_TIME){
-            if(bestOffer.getTicket().getRemainingDays(actualDate) < 5) {
-                providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.07);
-            } else {
-                providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.1);
-            }
-        } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY){
-            if(findSimilarTickets(bestOffer.getTicket()).size() > 3) {
-                providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.07);
-            } else {
-                providerPrice = bestOffer.getPrice()+ (int)(bestOffer.getPrice() * 0.1);
-            }
-        }
-        if (providerPrice < bestOffer.getTicket().getMinimumProvidingPrice()) {
-            providerPrice = bestOffer.getTicket().getMinimumProvidingPrice();
-        }
-          }
-        // A partir de la deuxième offre : on diminue le prix en fonction de la meilleur offre d'un acheteur sur le ticket
-        return providerPrice;
     }
 
     @Override
