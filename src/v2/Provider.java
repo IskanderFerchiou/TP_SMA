@@ -1,24 +1,15 @@
 package v2;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 public class Provider extends Agent {
     private final List<Ticket> tickets; // les billets à vendre
-    private List<Buyer> buyers;
-    private HashMap<Ticket, Offer> bestOffers;
-
+    private final HashMap<Ticket, Offer> bestOffers;
     private NegotiationStrat strat;
-
-    private Integer id;
-
-
-    public Provider() {
-        this.tickets = new ArrayList<>();
-    }
+    private final Integer id;
 
     public Provider(Integer id, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) {
         super();
@@ -39,7 +30,6 @@ public class Provider extends Agent {
 
     public void addTicket (Ticket ticket) {
         this.tickets.add(ticket);
-        //ticket.setProvider(this);
     }
 
     public void removeTicket (Ticket ticket) {
@@ -62,7 +52,7 @@ public class Provider extends Agent {
             return Response.DATE_TOO_LATE;
         }
         if (offer.getPrice() < ticket.getMinimumProvidingPrice()){
-            return Response.PRICE_TOO_LOW;
+            return Response.LOW_PROPOSAL;
         }
         return Response.VALID_CONSTRAINTS;
     }
@@ -75,35 +65,35 @@ public class Provider extends Agent {
         this.strat = strat;
     }
 
-    /*public int calculatePrice(Offer offer, Date actualDate) {
-        int providerPrice = 0;
-       // Offer bestOffer = this.bestOffers.get(ticket);
-        // Première offre : le fournisseur fait une offre avec son prix de vente souhaité
-//        if (offer == null) {
-//            providerPrice = ticket.getPreferedProvidingPrice();
-//        } else {
-            if(this.strat == NegotiationStrat.DEFAULT){
-                // si le nouveau prix calculé est en dessous du prix de vente minimum, on prend le prix de vente minimum
-                providerPrice = offer.getPrice() + (int)(offer.getPrice() * 0.1);
+    public int calculatePrice(Negotiation negotiation) {
+        int providerPrice;
+        List<Offer> history = this.getOffers(negotiation);
+        Ticket ticket = negotiation.getTicket();
 
-            } else if (this.strat == NegotiationStrat.REMAINING_TIME){
-                if(offer.getTicket().getRemainingDays(actualDate) < 5) {
-                    providerPrice = offer.getPrice()+ (int)(offer.getPrice() * 0.07);
-                } else {
-                    providerPrice = offer.getPrice()+ (int)(offer.getPrice() * 0.1);
-                }
-            } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY){
-                if(findSimilarTickets(offer.getTicket()).size() > 3) {
-                    providerPrice = offer.getPrice()+ (int)(offer.getPrice() * 0.07);
-                } else {
-                    providerPrice = offer.getPrice()+ (int)(offer.getPrice() * 0.1);
-                }
+        // marge de négociation divisé par 5 pour temporiser la négociation
+        double coefNegotiation = ((double)(ticket.getPreferedProvidingPrice() - ticket.getMinimumProvidingPrice()) / ticket.getPreferedProvidingPrice()) / 5;
+
+        // si le fournisseur n'a toujours pas fait de contre-offre
+        if (history.size() <= 1) {
+            providerPrice = ticket.getPreferedProvidingPrice() - (int)(ticket.getPreferedProvidingPrice() * coefNegotiation);
+        // A partir de la deuxième offre : on diminue le prix en fonction de la dernière offre du fournisseur et de la stratégie
+        } else {
+            Offer lastSentOffer = history.get(history.size() - 2);
+
+            if (this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 5) {
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * 0.07);
+            } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3) {
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * 0.07);
+            } else {
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * coefNegotiation);
             }
-            if (providerPrice < offer.getTicket().getMinimumProvidingPrice()) {
-                providerPrice = offer.getTicket().getMinimumProvidingPrice();
-            }
-      //  }
-        // A partir de la deuxième offre : on diminue le prix en fonction de la meilleur offre d'un acheteur sur le ticket
+        }
+
+        // si le nouveau prix calculé est en dessous du prix de vente minimum, on prend le prix de vente minimum
+        if (providerPrice < ticket.getMinimumProvidingPrice()) {
+            providerPrice = ticket.getMinimumProvidingPrice();
+        }
+
         return providerPrice;
     }*/
 
@@ -142,23 +132,6 @@ public class Provider extends Agent {
 
     @Override
     public void run() {
-        // Initialisation des billets
-//        Ticket ticket1 = new Ticket(
-//                this,
-//                "Paris",
-//                "Tokyo",
-//                1000,
-//                800,
-//                new Date(2022, 11, 7),
-//                new Date(2022, 11, 10)
-//        );
-
-//        try {
-            // catalogue.put(ticket1);
-            catalogue.addAll(tickets);
-            // System.out.println("Ajout du ticket :" + ticket1);
-//        } catch(InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        catalogue.addAll(tickets);
     }
 }

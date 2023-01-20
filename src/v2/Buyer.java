@@ -22,11 +22,9 @@ public class Buyer extends Agent {
 
     private Date actualDate;
 
-    private final HashMap<Ticket, Offer> bestOffers;
-
     private final AtomicBoolean available;
 
-    private CountDownLatch latch;
+    private final CountDownLatch latch;
 
 
     public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch) {
@@ -41,7 +39,6 @@ public class Buyer extends Agent {
         this.preferredProvidersID = new ArrayList<>();
         this.catalogue = catalogue;
         this.actualDate = actualDate;
-        this.bestOffers = new HashMap<>();
         this.available = new AtomicBoolean(true);
         this.latch = latch;
     }
@@ -133,13 +130,9 @@ public class Buyer extends Agent {
 
     public Response checkConstraint(Offer offer) {
         Ticket ticket = offer.getTicket();
-        Offer bestOffer = this.bestOffers.get(ticket);
-        if (bestOffer == null || bestOffer.getPrice() >= offer.getPrice()) {
-            this.bestOffers.put(ticket, offer);
-        }
         if (!ticket.getArrivalPlace().equals(this.destination))
             return Response.WRONG_DESTINATION;
-        if (rejectedProvidersID.contains(offer.getProvider()))
+        if (rejectedProvidersID.contains(offer.getProvider().getId()))
             return Response.PROVIDER_REJECTED;
         if (offer.getOfferDate().after(this.latestBuyingDate)) {
             System.out.println("Dernière date d'achat maximum pour l'acheteur écoulée (" + this.getLatestBuyingDate() + ")");
@@ -154,7 +147,7 @@ public class Buyer extends Agent {
     public Response checkConstraint(Ticket ticket) {
         if (!ticket.getArrivalPlace().equals(this.destination))
             return Response.WRONG_DESTINATION;
-        if (rejectedProvidersID.contains(ticket.getProvider()))
+        if (rejectedProvidersID.contains(ticket.getProvider().getId()))
             return Response.PROVIDER_REJECTED;
         if (ticket.getPreferedProvidingDate().after(this.latestBuyingDate)) {
             System.out.println("La date de mise en vente du ticket dépasse la dernière date d'achat possible (" + this.getLatestBuyingDate() + ")");
@@ -165,56 +158,34 @@ public class Buyer extends Agent {
 
         return Response.VALID_CONSTRAINTS;
     }
-    
-   /* public int calculatePrice(Offer offer) {
-        int buyerPrice;
-       // Offer bestOffer = this.bestOffers.get(ticket);
-        // Première offre de l'acheteur : il propose en fonction de son budget maximum
-//        if (offer == null) {
-//            buyerPrice = this.maximumBudget - (int) (0.2 * this.maximumBudget);
-//            // A partir de la deuxième offre, il regarde la réponse du fournisseur et augmente le prix sans dépasser son budget
-//        } else {
 
-            System.out.println("L'acheteur " + this.getName() + " a reçu une offre de " + offer.getPrice() + "€ pour le ticket " + offer.getTicket());
-            // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
-            buyerPrice = offer.getPrice() - (int) (offer.getPrice() * 0.1);
-            System.out.println("L'acheteur " + this.getName() + " propose " + buyerPrice + "€ pour le ticket " + offer.getTicket());
-            if (buyerPrice > this.maximumBudget) {
-                buyerPrice = this.maximumBudget;
-            }
-        //}
-        return buyerPrice;
-    }*/
-
-    public int calculatePrice(Ticket ticket) {
+    public int calculatePrice(Negotiation negotiation) {
         int buyerPrice;
-        Offer bestOffer = this.bestOffers.get(ticket);
-        // Première offre de l'acheteur : il propose en fonction de son budget maximum
-        if (bestOffer == null) {
-            buyerPrice = this.maximumBudget - (int) (0.2 * this.maximumBudget);
-            // A partir de la deuxième offre, il regarde la réponse du fournisseur et augmente le prix sans dépasser son budget
+        List<Offer> history = this.getOffers(negotiation);
+        Ticket ticket = negotiation.getTicket();
+
+        int min = Math.min(this.maximumBudget, ticket.getPreferedProvidingPrice());
+
+        // si l'acheteur n'a toujours pas fait de contre-offre, il propose en fonction du minimum entre le budget et le prix du ticket
+        if (history.size() <= 1) {
+            buyerPrice = min - (int)(0.1 * min);
+            // A partir de la deuxième offre : on augmente le prix en fonction de la dernière offre de l'acheteur
         } else {
+            Offer lastSentOffer = history.get(history.size() - 2);
 
-        System.out.println("L'acheteur " + this.getName() + " a reçu une offre de " + bestOffer.getPrice() + "€ pour le ticket " + bestOffer.getTicket());
-        // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
-        buyerPrice = bestOffer.getPrice() - (int) (bestOffer.getPrice() * 0.1);
-        System.out.println("L'acheteur " + this.getName() + " propose " + buyerPrice + "€ pour le ticket " + bestOffer.getTicket());
+            // marge de négociation divisé par 5 pour temporiser la négociation
+            double coefNegotiation = ((double)(min - lastSentOffer.getPrice()) / min) / 5;
+
+            buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice() * coefNegotiation);
+        }
+
+        // si le nouveau prix calculé est au dessus du budget maximum, on prend le budget maximum
         if (buyerPrice > this.maximumBudget) {
             buyerPrice = this.maximumBudget;
         }
-        }
+
         return buyerPrice;
     }
-
-//    public int calculatePrice(Ticket ticket) {
-//        int buyerPrice;
-//        buyerPrice = ticket.getPreferedProvidingPrice() - (int) (0.2 * ticket.getPreferedProvidingPrice());
-//        if (buyerPrice > this.maximumBudget) {
-//            buyerPrice = this.maximumBudget;
-//        }
-//        return buyerPrice;
-//    }
-
 
     @Override
     public void run() {
@@ -280,8 +251,8 @@ public class Buyer extends Agent {
                 // si une négociation a échoué ou réussi
                 if (n.getStatus() != NegotiationStatus.RUNNING) {
                     // on prend uniquement la date de la négociation si elle est plus grande
-                    if (n.getFinalDate().after(this.actualDate)) {
-                        this.actualDate = n.getFinalDate();
+                    if (n.getCurrentDate().after(this.actualDate)) {
+                        this.actualDate = n.getCurrentDate();
                     }
                     // on retire la negociation de la liste des négociations en cours.
                     iterator.remove();

@@ -10,18 +10,18 @@ public class Negotiation implements Runnable {
     private final Provider provider;
     private final Buyer buyer;
 
-    private Date finalDate;
+    private Date currentDate;
 
     private NegotiationStatus status;
 
-    private CountDownLatch latch;
+    private final CountDownLatch latch;
 
     public Negotiation(Ticket ticket, Buyer buyer, Provider provider, CountDownLatch latch) {
         this.provider = provider;
         this.buyer = buyer;
         this.ticket = ticket;
         this.status = NegotiationStatus.RUNNING;
-        this.finalDate = new Date();
+        this.currentDate = ticket.getPreferedProvidingDate();
         this.latch = latch;
     }
 
@@ -29,8 +29,8 @@ public class Negotiation implements Runnable {
         return status;
     }
 
-    public Date getFinalDate() {
-        return finalDate;
+    public Date getCurrentDate() {
+        return currentDate;
     }
 
     public Provider getProvider() {
@@ -59,29 +59,27 @@ public class Negotiation implements Runnable {
     }
 
     public void displayDiscussion() {
-        String discussion = "";
+        StringBuilder discussion = new StringBuilder();
+        List<Offer> history = this.buyer.getOffers(this);
 
-        List<Offer> providerReceivedOffers = this.provider.getOffers();
-        List<Offer> buyerReceivedOffers = this.buyer.getOffers();
+        discussion.append("\n------------------ Historique de la négociation ").append(Thread.currentThread().getId()).append(" ------------------ \n");
 
-        providerReceivedOffers = providerReceivedOffers.stream().filter(offer -> offer.getBuyer().equals(this.buyer)).toList();
-        buyerReceivedOffers = buyerReceivedOffers.stream().filter(offer -> offer.getProvider().equals(this.provider)).toList();
+        discussion.append(this.ticket).append("\n");
 
-        discussion += "------ Historique de la négociation " + Thread.currentThread().getId() + " ------ \n";
-        discussion += "Client : "+ this.buyer.getName() + "\n";
-        discussion += "Vendeur : "+ this.provider.getId() + "\n";
+        discussion.append("Budget maximum : ").append(this.buyer.getMaximumBudget()).append("\n\n");
 
-        for (int i = 0; i < Math.max(providerReceivedOffers.size(), buyerReceivedOffers.size()); i++) {
+        for (int i = 0; i < history.size(); i++) {
 
-            if (providerReceivedOffers.size() > i) {
-                discussion += providerReceivedOffers.get(i) + "\n";
+            if (i % 2 == 0) {
+                discussion.append("Client ").append(this.buyer.getName()).append(" : ");
+            } else {
+                discussion.append("Vendeur ").append(this.provider.getId()).append(" : ");
             }
 
-            if (buyerReceivedOffers.size() > i) {
-                discussion += buyerReceivedOffers.get(i) + "\n";
-            }
+            discussion.append(history.get(i)).append("\n");
+
         }
-        discussion += "------------------------------------------";
+        discussion.append("--------------------------------------------------------------------- \n");
 
         System.out.println(discussion);
     }
@@ -96,14 +94,12 @@ public class Negotiation implements Runnable {
 
         int maximumNumberOfOffers = 6; // limite
 
-        // date de la première offre
-        Date offerDate = ticket.getPreferedProvidingDate();
         Offer offer;
 
         // première proposition de l'acheteur
-        int buyerPrice = buyer.calculatePrice(ticket);
-        offer = new Offer(provider, buyer, ticket, buyerPrice, offerDate);
-        buyer.send(provider, offer);
+        int buyerPrice = buyer.calculatePrice(this);
+        offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate);
+        buyer.send(this, offer);
         int numberOfOffers = 1; // compteur
 
         while (Thread.currentThread().isAlive()) {
@@ -115,24 +111,17 @@ public class Negotiation implements Runnable {
             offer.setResponse(providerResponse);
 
             // si le prix est trop bas, on continue les offres
-            if (providerResponse == Response.PRICE_TOO_LOW) {
-                // on vérifie d'abord si l'acheteur a dépasse le nombre maximum d'offres
-                if (numberOfOffers == maximumNumberOfOffers) {
-                    this.status = NegotiationStatus.FAILURE;
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le nombre maximum d'offres a été dépassé.");
-                    break;
-                } else {
+            if (providerResponse == Response.LOW_PROPOSAL) {
 
-                    // calcul du nouveau prix selon le ticket et la dernière offre du provider
-                    int providerPrice = provider.calculatePrice(ticket, offerDate);
+                // calcul du nouveau prix selon le ticket et la dernière offre du provider
+                int providerPrice = provider.calculatePrice(this);
 
-                    offer = new Offer(provider, buyer, ticket, providerPrice, offerDate);
-                    provider.send(buyer, offer);
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : " + provider + " propose " + providerPrice + "€ pour le ticket " + ticket + " à " + buyer.getName() + ".");
+                offer = new Offer(provider, buyer, ticket, providerPrice, currentDate);
+                provider.send(this, offer);
 
-                    // on passe au lendemain (le fournisseur fait 1 offre par jour)
-                    offerDate = Utils.nextDay(offerDate);
-                }
+                // on passe au lendemain (le fournisseur fait 1 offre par jour)
+                currentDate = Utils.nextDay(currentDate);
+
                 // sinon on arrête la négociation car la vente a été effectué
             } else if (providerResponse == Response.VALID_CONSTRAINTS) {
                 // un seul thread pour la phrase de paiement (vente du ticket)
@@ -154,20 +143,25 @@ public class Negotiation implements Runnable {
             }
 
             // avant de réagir à l'offre du vendeur, on vérifie si l'acheteur est toujours à la recherche d'un ticket
-            if (!buyer.isAvailable()) break;
-
+            if (isBuyerNotAvailable()) break;
 
             // L'acheteur étudie l'offre selon ses contraintes et répond au fournisseur
             Response buyerResponse = buyer.checkConstraint(offer);
             offer.setResponse(buyerResponse);
 
-            // si le prix est trop bas, on continue les offres.
+            // si le prix est trop bas, on continue les offres
             if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
-                buyerPrice = buyer.calculatePrice(ticket);
-                offer = new Offer(provider, buyer, ticket, buyerPrice, offerDate);
-                System.out.println("Négociation " + Thread.currentThread().getId() + " : " + buyer.getName() + " propose " + buyerPrice + "€ pour le ticket " + ticket + " à " + provider + ".");
-                buyer.send(provider, offer);
-                numberOfOffers++;
+                // on vérifie d'abord si l'acheteur a dépasse le nombre maximum d'offres
+                if (numberOfOffers == maximumNumberOfOffers) {
+                    this.status = NegotiationStatus.FAILURE;
+                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le nombre maximum d'offres a été dépassé.");
+                    break;
+                } else {
+                    buyerPrice = buyer.calculatePrice(this);
+                    offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate);
+                    buyer.send(this, offer);
+                    numberOfOffers++;
+                }
                 // sinon on arrête la négociation car l'achat a été effectué
             } else if (buyerResponse == Response.VALID_CONSTRAINTS) {
                 // un seul thread entre dans cette partie du code (achat du ticket)
@@ -188,8 +182,6 @@ public class Negotiation implements Runnable {
                 break;
             }
         }
-        // date de fin des négociations pour mettre à jour la date actuelle du point de vue du buyer
-        this.finalDate = offerDate;
         displayDiscussion();
     }
 }

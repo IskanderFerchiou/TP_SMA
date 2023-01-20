@@ -1,7 +1,6 @@
 package v2;
 
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 

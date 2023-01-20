@@ -4,23 +4,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Inbox {
-    private static final ConcurrentHashMap<Agent, CopyOnWriteArrayList<Offer>> offers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Negotiation, CopyOnWriteArrayList<Offer>> chat = new ConcurrentHashMap<>();
 
-    public CopyOnWriteArrayList<Offer> getOffers(Agent agent) {
-        CopyOnWriteArrayList<Offer> receivedOffers = offers.get(agent);
-        if (receivedOffers == null) {
-            receivedOffers = new CopyOnWriteArrayList<>();
-            offers.put(agent, receivedOffers);
+    public CopyOnWriteArrayList<Offer> getOffers(Negotiation negotiation) {
+        CopyOnWriteArrayList<Offer> offers = chat.get(negotiation);
+        if (offers == null) {
+            offers = new CopyOnWriteArrayList<>();
+            chat.put(negotiation, offers);
         }
-        return receivedOffers;
+        return offers;
     }
 
-    public void send(Agent agent, Offer offer){
-        CopyOnWriteArrayList<Offer> recipientOffers = offers.get(agent);
-        if (recipientOffers == null) {
-            recipientOffers = new CopyOnWriteArrayList<>();
+    public void send(Negotiation negotiation, Offer offer) {
+        CopyOnWriteArrayList<Offer> offers = chat.get(negotiation);
+        if (offers == null) {
+            offers = new CopyOnWriteArrayList<>();
         }
-        recipientOffers.add(offer);
-        offers.put(agent, recipientOffers);
+        offers.add(offer);
+        chat.put(negotiation, offers);
     }
 }

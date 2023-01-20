@@ -10,17 +10,16 @@ public abstract class Agent implements Runnable  {
     private final Inbox chat;
     protected BlockingQueue<Ticket> catalogue;
 
-
     public Agent() {
         this.chat = new Inbox();
     }
 
-    public CopyOnWriteArrayList<Offer> getOffers() {
-        return chat.getOffers(this);
+    public CopyOnWriteArrayList<Offer> getOffers(Negotiation negotiation) {
+        return chat.getOffers(negotiation);
     }
 
-    public void send(Agent agent, Offer offer) {
-        chat.send(agent, offer);
+    public void send(Negotiation negotiation, Offer offer) {
+        chat.send(negotiation, offer);
     }
 
     public List<Ticket> findSimilarTickets(Ticket ticket) {

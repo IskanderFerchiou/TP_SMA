@@ -71,7 +71,8 @@ public class Offer {
     @Override
     public String toString() {
         return "Offre (Prix : " + price +
-                ", Date : " + Utils.formatDate(offerDate) + ")";
+                ", Date : " + Utils.formatDate(offerDate) + "" +
+                ", Réponse : " + response + ")";
     }
 
 
