@@ -57,8 +57,8 @@ public class Main {
 //        buyers.add(buyer1);
 //        buyers.add(buyer2);
 
-        String scenario = "2";
-        NegotiationStrat strat = NegotiationStrat.DEFAULT;
+        String scenario = "3";
+        NegotiationStrat strat = NegotiationStrat.TICKETS_SIMILARITY;
         List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, latch);
         List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue, strat);
         Utils.instantiateTickets("Tickets" + scenario + ".csv", providers);

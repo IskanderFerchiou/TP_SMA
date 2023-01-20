@@ -137,6 +137,8 @@ public class Buyer extends Agent {
         if (bestOffer == null || bestOffer.getPrice() >= offer.getPrice()) {
             this.bestOffers.put(ticket, offer);
         }
+        if (!ticket.getArrivalPlace().equals(this.destination))
+            return Response.WRONG_DESTINATION;
         if (rejectedProvidersID.contains(offer.getProvider()))
             return Response.PROVIDER_REJECTED;
         if (offer.getOfferDate().after(this.latestBuyingDate)) {
@@ -164,6 +166,26 @@ public class Buyer extends Agent {
         return Response.VALID_CONSTRAINTS;
     }
     
+   /* public int calculatePrice(Offer offer) {
+        int buyerPrice;
+       // Offer bestOffer = this.bestOffers.get(ticket);
+        // Première offre de l'acheteur : il propose en fonction de son budget maximum
+//        if (offer == null) {
+//            buyerPrice = this.maximumBudget - (int) (0.2 * this.maximumBudget);
+//            // A partir de la deuxième offre, il regarde la réponse du fournisseur et augmente le prix sans dépasser son budget
+//        } else {
+
+            System.out.println("L'acheteur " + this.getName() + " a reçu une offre de " + offer.getPrice() + "€ pour le ticket " + offer.getTicket());
+            // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
+            buyerPrice = offer.getPrice() - (int) (offer.getPrice() * 0.1);
+            System.out.println("L'acheteur " + this.getName() + " propose " + buyerPrice + "€ pour le ticket " + offer.getTicket());
+            if (buyerPrice > this.maximumBudget) {
+                buyerPrice = this.maximumBudget;
+            }
+        //}
+        return buyerPrice;
+    }*/
+
     public int calculatePrice(Ticket ticket) {
         int buyerPrice;
         Offer bestOffer = this.bestOffers.get(ticket);
@@ -173,14 +195,26 @@ public class Buyer extends Agent {
             // A partir de la deuxième offre, il regarde la réponse du fournisseur et augmente le prix sans dépasser son budget
         } else {
 
-            // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
-            buyerPrice = bestOffer.getPrice() - (int) (bestOffer.getPrice() * 0.1);
-            if (buyerPrice > this.maximumBudget) {
-                buyerPrice = this.maximumBudget;
-            }
+        System.out.println("L'acheteur " + this.getName() + " a reçu une offre de " + bestOffer.getPrice() + "€ pour le ticket " + bestOffer.getTicket());
+        // si le nouveau prix calculé est au dessus du budget maximum, l'acheteur négocie
+        buyerPrice = bestOffer.getPrice() - (int) (bestOffer.getPrice() * 0.1);
+        System.out.println("L'acheteur " + this.getName() + " propose " + buyerPrice + "€ pour le ticket " + bestOffer.getTicket());
+        if (buyerPrice > this.maximumBudget) {
+            buyerPrice = this.maximumBudget;
+        }
         }
         return buyerPrice;
     }
+
+//    public int calculatePrice(Ticket ticket) {
+//        int buyerPrice;
+//        buyerPrice = ticket.getPreferedProvidingPrice() - (int) (0.2 * ticket.getPreferedProvidingPrice());
+//        if (buyerPrice > this.maximumBudget) {
+//            buyerPrice = this.maximumBudget;
+//        }
+//        return buyerPrice;
+//    }
+
 
     @Override
     public void run() {

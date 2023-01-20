@@ -68,15 +68,17 @@ public class Negotiation implements Runnable {
         buyerReceivedOffers = buyerReceivedOffers.stream().filter(offer -> offer.getProvider().equals(this.provider)).toList();
 
         discussion += "------ Historique de la négociation " + Thread.currentThread().getId() + " ------ \n";
+        discussion += "Client : "+ this.buyer.getName() + "\n";
+        discussion += "Vendeur : "+ this.provider.getId() + "\n";
 
         for (int i = 0; i < Math.max(providerReceivedOffers.size(), buyerReceivedOffers.size()); i++) {
 
             if (providerReceivedOffers.size() > i) {
-                discussion += providerReceivedOffers.get(0) + "\n";
+                discussion += providerReceivedOffers.get(i) + "\n";
             }
 
             if (buyerReceivedOffers.size() > i) {
-                discussion += buyerReceivedOffers.get(0) + "\n";
+                discussion += buyerReceivedOffers.get(i) + "\n";
             }
         }
         discussion += "------------------------------------------";
@@ -120,10 +122,13 @@ public class Negotiation implements Runnable {
                     System.out.println("Négociation " + Thread.currentThread().getId() + " : le nombre maximum d'offres a été dépassé.");
                     break;
                 } else {
+
                     // calcul du nouveau prix selon le ticket et la dernière offre du provider
                     int providerPrice = provider.calculatePrice(ticket, offerDate);
+
                     offer = new Offer(provider, buyer, ticket, providerPrice, offerDate);
                     provider.send(buyer, offer);
+                    System.out.println("Négociation " + Thread.currentThread().getId() + " : " + provider + " propose " + providerPrice + "€ pour le ticket " + ticket + " à " + buyer.getName() + ".");
 
                     // on passe au lendemain (le fournisseur fait 1 offre par jour)
                     offerDate = Utils.nextDay(offerDate);
@@ -160,6 +165,7 @@ public class Negotiation implements Runnable {
             if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
                 buyerPrice = buyer.calculatePrice(ticket);
                 offer = new Offer(provider, buyer, ticket, buyerPrice, offerDate);
+                System.out.println("Négociation " + Thread.currentThread().getId() + " : " + buyer.getName() + " propose " + buyerPrice + "€ pour le ticket " + ticket + " à " + provider + ".");
                 buyer.send(provider, offer);
                 numberOfOffers++;
                 // sinon on arrête la négociation car l'achat a été effectué
