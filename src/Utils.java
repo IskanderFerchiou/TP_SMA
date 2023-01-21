@@ -44,7 +44,7 @@ public class Utils {
         return providers;
     }
 
-    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch, NegotiationStrat strat) throws IOException, ParseException {
+    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, Date actualDate, Phaser phaser, NegotiationStrat strat) throws IOException, ParseException {
         File file = new File("datasets/" + filename);
         List<Buyer> buyers = new ArrayList<>();
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy");

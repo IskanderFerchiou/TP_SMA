@@ -24,7 +24,7 @@ public class Main {
 
         String scenario = "2";
         NegotiationStrat strat = NegotiationStrat.REMAINING_TIME;
-        List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, latch, strat);
+        List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, phaser, strat);
         List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue, strat);
         Utils.instantiateTickets("Tickets" + scenario + ".csv", providers);
 

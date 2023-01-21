@@ -27,7 +27,7 @@ public class Buyer extends Agent {
 
 
     public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, 
-                 BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch, Integer maximumNumberOfOffers, NegotiationStrat strat) {
+                 BlockingQueue<Ticket> catalogue, Date actualDate, Phaser buyerPhaser, Integer maximumNumberOfOffers, NegotiationStrat strat) {
         super();
         this.name = name;
         this.destination = destination;
