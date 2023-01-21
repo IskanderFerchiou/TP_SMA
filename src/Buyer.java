@@ -118,6 +118,15 @@ public class Buyer extends Agent {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return name + " (Destination : " + destination +
+                ", Budget maximum : " + maximumBudget + "" +
+                ", Date limite d'achat : " + Utils.formatDate(latestBuyingDate) +
+                ", Fournisseurs préférés : " + Arrays.toString(preferredProvidersID.toArray()) +
+                ", Fournisseurs detestés : " + Arrays.toString(rejectedProvidersID.toArray()) + ")";
+    }
+
     public boolean isAvailable() {
         return available.get();
     }

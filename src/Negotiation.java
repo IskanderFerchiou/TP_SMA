@@ -62,9 +62,8 @@ public class Negotiation implements Runnable {
 
         discussion.append("\n------------------ Historique de la négociation ").append(Thread.currentThread().getId()).append(" ------------------ \n");
 
-        discussion.append(this.ticket).append("\n");
-
-        discussion.append("Budget maximum : ").append(this.buyer.getMaximumBudget()).append("\n\n");
+        discussion.append("- ").append(this.ticket).append("\n");
+        discussion.append("- Client : ").append(this.buyer).append("\n\n");
 
         for (int i = 0; i < history.size(); i++) {
 
@@ -127,10 +126,10 @@ public class Negotiation implements Runnable {
                     // on procéde à la vente si le ticket est toujours en vente et que l'acheteur est toujours à la recherche d'un ticket
                     if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
 
-                    this.status = NegotiationStatus.SUCCESS;
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le fournisseur a vendu le " + ticket + " à " + buyer.getName() + ".");
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
+                    this.status = NegotiationStatus.SUCCESS;
+                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le fournisseur a vendu le " + ticket + " à " + buyer.getName() + ".");
                     break;
                 }
                 // ou une contrainte majeur n'a pas été respecté
@@ -167,10 +166,10 @@ public class Negotiation implements Runnable {
                     // on procéde à l'achat si le ticket est toujours en vente et que l'acheteur est toujours à la recherche d'un ticket
                     if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
 
-                    this.status = NegotiationStatus.SUCCESS;
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le client " + buyer.getName() + " a acheté le " + ticket + ".");
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
+                    this.status = NegotiationStatus.SUCCESS;
+                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le client " + buyer.getName() + " a acheté le " + ticket + ".");
                     break;
                 }
                 // ou une contrainte majeur n'a pas été respecté

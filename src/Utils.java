@@ -31,10 +31,16 @@ public class Utils {
             FileReader reader = new FileReader(file);
             BufferedReader br = new BufferedReader(reader);
             int totalProviders = (int) br.lines().count() - 1;
+
+            System.out.println("Liste des fournisseurs : ");
+
             for (int i = 0; i < totalProviders; i++) {
                 providers.add(new Provider(i, catalogue, strat));
+                System.out.println("- Fournisseur " + i);
             }
+            System.out.println();
         }
+
         return providers;
     }
 
@@ -49,6 +55,9 @@ public class Utils {
             String line;
             String [] spllitedLine;
             br.readLine(); // avoid first line
+
+            System.out.println("Liste des acheteurs : ");
+
             while ((line = br.readLine()) != null)
             {
                 spllitedLine = line.split(";");
@@ -61,16 +70,19 @@ public class Utils {
                         actualDate,
                         latch);
 
-                if (spllitedLine.length > 5 && spllitedLine[5] != null) {
+                if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {
                     buyer.addPreferredProviderID(Integer.valueOf(spllitedLine[5]));
                 }
 
-                if (spllitedLine.length > 5 && spllitedLine[6] != null) {
+                if (spllitedLine.length > 5 && spllitedLine[6] != null && !spllitedLine[6].equals("")) {
                     buyer.addRejectedProviderID(Integer.valueOf(spllitedLine[6]));
                 }
 
                 buyers.add(buyer);
+
+                System.out.println("- " + buyer);
             }
+            System.out.println();
         }
         return buyers;
     }
@@ -84,6 +96,9 @@ public class Utils {
             String line;
             String [] spllitedLine;
             br.readLine(); // avoid first line
+
+            System.out.println("Liste des tickets : ");
+
             while ((line = br.readLine()) != null)
             {
                 spllitedLine = line.split(";");
@@ -100,7 +115,10 @@ public class Utils {
                 );
 
                 provider.addTicket(ticket);
+
+                System.out.println("- " + ticket);
             }
+            System.out.println();
         }
 
     }

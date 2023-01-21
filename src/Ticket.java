@@ -99,7 +99,8 @@ public class Ticket {
     public String toString() {
         return "Ticket (Fournisseur ID : " + provider.getId() +
                 ", Destination : " + arrivalPlace +
-                ", Prix de départ : " + preferedProvidingPrice + ")";
+                ", Prix de départ : " + preferedProvidingPrice +
+                ", Prix minimum : " + minimumProvidingPrice + ")";
     }
 
     @Override
