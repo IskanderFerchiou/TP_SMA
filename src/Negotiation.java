@@ -116,11 +116,13 @@ public class Negotiation implements Runnable {
                 provider.send(this, offer);
 
                 // on passe au lendemain (le fournisseur fait 1 offre par jour)
+//                synchronized (Negotiation.class){
+//                    currentDate = Utils.nextDay(currentDate);
+//                }
                 currentDate = Utils.nextDay(currentDate);
 
                 // sinon on arrête la négociation car la vente a été effectué
             } else if (providerResponse == Response.VALID_CONSTRAINTS) {
-                // on procéde à la vente si le ticket est toujours en vente et que l'acheteur est toujours à la recherche d'un ticket
                 if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
 
                 // un seul thread pour la phrase de paiement (vente du ticket)
@@ -154,23 +156,24 @@ public class Negotiation implements Runnable {
                     break;
                 } else {
                     buyerPrice = buyer.calculatePrice(this);
+                    numberOfOffers++;
                     offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate, numberOfOffers);
                     buyer.send(this, offer);
-                    numberOfOffers++;
                 }
                 // sinon on arrête la négociation car l'achat a été effectué
             } else if (buyerResponse == Response.VALID_CONSTRAINTS) {
-                // on procéde à l'achat si le ticket est toujours en vente et que l'acheteur est toujours à la recherche d'un ticket
                 if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
 
-                // un seul thread entre dans cette partie du code (achat du ticket)
+                // un seul thread pour la phrase de paiement (vente du ticket)
                 synchronized (Ticket.class) {
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
                     this.status = NegotiationStatus.SUCCESS;
                     System.out.println("Négociation " + Thread.currentThread().getId() + " : le client " + buyer.getName() + " a acheté le " + ticket + ".");
                     break;
+
                 }
+
                 // ou une contrainte majeur n'a pas été respecté
             } else {
                 this.status = NegotiationStatus.FAILURE;
@@ -180,4 +183,9 @@ public class Negotiation implements Runnable {
         }
         displayDiscussion();
     }
+
+//    private synchronized boolean endNegociationProcess() {
+//        // on procéde à la vente si le ticket est toujours en vente et que l'acheteur est toujours à la recherche d'un ticket
+//
+//    }
 }

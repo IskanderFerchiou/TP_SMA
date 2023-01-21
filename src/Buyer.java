@@ -153,7 +153,7 @@ public class Buyer extends Agent {
         if (offer.getOfferDate().equals(this.latestBuyingDate)) {
             return Response.DATE_TOO_LATE;
         }
-        if (offer.getPrice() > this.maximumBudget || (double) offer.getOfferNumber() / this.maximumNumberOfOffers < 0.66)
+        if (offer.getPrice() > this.maximumBudget || (double) offer.getOfferNumber() / this.maximumNumberOfOffers < 0.33)
             return Response.KEEP_NEGOCIATING;
         return Response.VALID_CONSTRAINTS;
     }
@@ -190,13 +190,12 @@ public class Buyer extends Agent {
 
             // marge de négociation divisé par 5 pour temporiser la négociation
             double coefNegotiation = ((double)(min - lastSentOffer.getPrice()) / min) / 5;
-            if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 5)
-                buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation-0.01 == 0? 0.1 : coefNegotiation-0.01));
+            if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 2)
+                buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
             else if(this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3)
-                buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation-0.01 == 0? 0.1 : coefNegotiation-0.01));
+                buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
             else
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice() * coefNegotiation);
-
         }
 
         // si le nouveau prix calculé est au dessus du budget maximum, on prend le budget maximum

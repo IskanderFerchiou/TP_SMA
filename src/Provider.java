@@ -70,10 +70,10 @@ public class Provider extends Agent {
         } else {
             Offer lastSentOffer = history.get(history.size() - 2);
 
-            if (this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 5) {
-                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation-0.01 == 0? 0.1 : coefNegotiation-0.01));
+            if (this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 2) {
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation+0.03));
             } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3) {
-                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation-0.01 == 0? 0.1 : coefNegotiation-0.01));
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation+0.03));
             } else {
                 providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * coefNegotiation);
             }

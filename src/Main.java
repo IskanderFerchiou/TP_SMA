@@ -22,7 +22,7 @@ public class Main {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
         Date actualDate = df.parse("01/12/2022");
 
-        String scenario = "2";
+        String scenario = "2 - bis";
         NegotiationStrat strat = NegotiationStrat.REMAINING_TIME;
         List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, phaser, strat);
         List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue, strat);
