@@ -4,7 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Phaser;
 
 public class Utils {
 
@@ -44,7 +44,7 @@ public class Utils {
         return providers;
     }
 
-    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch) throws IOException, ParseException {
+    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, Date actualDate, Phaser phaser) throws IOException, ParseException {
         File file = new File("datasets/" + filename);
         List<Buyer> buyers = new ArrayList<>();
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
@@ -68,7 +68,7 @@ public class Utils {
                         df.parse(spllitedLine[4]),
                         catalogue,
                         actualDate,
-                        latch,
+                        phaser,
                         6);
 
                 if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {

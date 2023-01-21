@@ -1,6 +1,6 @@
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Buyer extends Agent {
@@ -23,11 +23,11 @@ public class Buyer extends Agent {
 
     private final AtomicBoolean available;
 
-    private final CountDownLatch latch;
+    private Phaser buyerPhaser;
 
 
-    public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, 
-                 BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch, Integer maximumNumberOfOffers) {
+    public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate,
+                 BlockingQueue<Ticket> catalogue, Date actualDate, Phaser buyerPhaser, Integer maximumNumberOfOffers) {
         super();
         this.name = name;
         this.destination = destination;
@@ -40,7 +40,8 @@ public class Buyer extends Agent {
         this.catalogue = catalogue;
         this.actualDate = actualDate;
         this.available = new AtomicBoolean(true);
-        this.latch = latch;
+        this.buyerPhaser = buyerPhaser;
+        buyerPhaser.register();
         this.maximumNumberOfOffers = maximumNumberOfOffers;
     }
 
@@ -148,8 +149,7 @@ public class Buyer extends Agent {
 
     // vérification des contraintes DURANT la négociation
     public Response checkConstraint(Offer offer) {
-        if (offer.getOfferDate().after(this.latestBuyingDate)) {
-            System.out.println("Dernière date d'achat maximum pour l'acheteur écoulée (" + this.getLatestBuyingDate() + ")");
+        if (offer.getOfferDate().equals(this.latestBuyingDate)) {
             return Response.DATE_TOO_LATE;
         }
         if (offer.getPrice() > this.maximumBudget || (double) offer.getOfferNumber() / this.maximumNumberOfOffers < 0.66)
@@ -164,7 +164,7 @@ public class Buyer extends Agent {
         if (rejectedProvidersID.contains(ticket.getProvider().getId()))
             return Response.PROVIDER_REJECTED;
         if (ticket.getPreferedProvidingDate().after(this.latestBuyingDate)) {
-            System.out.println("La date de mise en vente du ticket dépasse la dernière date d'achat possible (" + this.getLatestBuyingDate() + ")");
+            System.out.println("La date de mise en vente du ticket dépasse la dernière date d'achat possible (" + Utils.formatDate(this.getLatestBuyingDate()) + ")");
             return Response.DATE_TOO_LATE;
         }
         if (ticket.getPreferedProvidingPrice() > this.maximumBudget)
@@ -203,11 +203,7 @@ public class Buyer extends Agent {
 
     @Override
     public void run() {
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        buyerPhaser.arriveAndAwaitAdvance();
         List<Ticket> seenTickets = new ArrayList<>();
         List<Ticket> addedTickets;
         List<Negotiation> negotiations = new ArrayList<>();
@@ -216,7 +212,12 @@ public class Buyer extends Agent {
 
         boolean preferredNegotiations = false;
 
+        boolean runPhaser = false;
+
+        Phaser negotiationPhaser = new Phaser(1);
+
         while (isAvailable()) {
+
             // Si la date actuelle dépasse la date limite, l'acheteur n'est plus disponible
             if (this.actualDate.after(this.latestBuyingDate)) {
                 System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(this.actualDate) + ") a dépassé la date limite.");
@@ -244,17 +245,22 @@ public class Buyer extends Agent {
                     boolean startNegotiation = buyerResponse == Response.KEEP_NEGOCIATING || buyerResponse == Response.VALID_CONSTRAINTS;
                     // on commence les négociations si la contrainte est uniquement lié au prix
                     if (startNegotiation) {
-                        Negotiation nego = new Negotiation(ticket, this, ticket.getProvider(), latch);
+                        Negotiation nego = new Negotiation(ticket, this, ticket.getProvider(), negotiationPhaser);
                         negotiations.add(nego);
 
                         Thread negotiationThread = new Thread(nego);
                         negotiationThread.start();
+
+                        runPhaser = true;
                     }
                 }
             }
 
             // début des négociations en même temps
-            latch.countDown();
+            if (runPhaser) {
+                negotiationPhaser.arriveAndAwaitAdvance();
+                runPhaser = false;
+            }
 
             // on réinitialise cette variable avant de vérifier à nouveau si une négotiation avec un fournisseur préféré est en cours
             preferredNegotiations = false;
