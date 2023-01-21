@@ -4,7 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Phaser;
 
 public class Utils {
 
@@ -68,7 +68,7 @@ public class Utils {
                         df.parse(spllitedLine[4]),
                         catalogue,
                         actualDate,
-                        latch,
+                        phaser,
                         6, strat);
 
                 if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {

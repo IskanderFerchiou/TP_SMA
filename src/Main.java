@@ -5,8 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Phaser;
 
 public class Main {
 
@@ -16,7 +16,7 @@ public class Main {
         BlockingQueue<Ticket> catalogue = new LinkedBlockingQueue<>();
 
         // Signal de départ
-        CountDownLatch latch = new CountDownLatch(1);
+        Phaser phaser = new Phaser(1);
 
         // Date actuelle
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
@@ -38,6 +38,6 @@ public class Main {
             buyerThread.start();
         }
 
-        latch.countDown();
+        phaser.arriveAndAwaitAdvance();
     }
 }

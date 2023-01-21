@@ -1,11 +1,10 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 public class Provider extends Agent {
     private final List<Ticket> tickets; // les billets à vendre
-    private final HashMap<Ticket, Offer> bestOffers;
+    private NegotiationStrat strat;
     private final Integer id;
 
     public Provider(Integer id, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) {
@@ -13,7 +12,6 @@ public class Provider extends Agent {
         this.id = id;
         this.tickets = new ArrayList<>();
         this.catalogue = catalogue;
-        this.bestOffers = new HashMap<>();
         this.strat = strat;
     }
 
@@ -38,14 +36,9 @@ public class Provider extends Agent {
         catalogue.remove(ticket);
     }
 
-    public Response checkConstraint (Offer offer) {
+    public Response checkConstraint(Offer offer) {
         Ticket ticket = offer.getTicket();
-        Offer bestOffer = this.bestOffers.get(ticket);
-        if (bestOffer == null || bestOffer.getPrice() <= offer.getPrice()) {
-            this.bestOffers.put(ticket, offer);
-        }
         if (offer.getOfferDate().equals(ticket.getLatestProvidingDate())) {
-            System.out.println("Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.");
             return Response.DATE_TOO_LATE;
         }
         if (offer.getPrice() < ticket.getMinimumProvidingPrice() || offer.getOfferNumber() < 3){
