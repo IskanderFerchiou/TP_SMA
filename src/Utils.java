@@ -68,7 +68,8 @@ public class Utils {
                         df.parse(spllitedLine[4]),
                         catalogue,
                         actualDate,
-                        latch);
+                        latch,
+                        6);
 
                 if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {
                     buyer.addPreferredProviderID(Integer.valueOf(spllitedLine[5]));

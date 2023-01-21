@@ -38,16 +38,16 @@ public class Negotiation implements Runnable {
 
     public boolean isTicketNotAvailable() {
         if (ticket.isNotAvailable()) {
-            System.out.println("Négociation " + Thread.currentThread().getId() + " : " + ticket + " a été vendu à un autre acheteur.");
             this.status = NegotiationStatus.FAILURE;
+            System.out.println("Négociation " + Thread.currentThread().getId() + " : " + ticket + " a été vendu à un autre acheteur.");
         }
         return ticket.isNotAvailable();
     }
 
     public boolean isBuyerNotAvailable() {
         if (!buyer.isAvailable()) {
-            System.out.println("Négociation " + Thread.currentThread().getId() + " : " + buyer.getName() + " n'est plus disponible.");
             this.status = NegotiationStatus.FAILURE;
+            System.out.println("Négociation " + Thread.currentThread().getId() + " : " + buyer.getName() + " n'est plus disponible.");
         }
         return !buyer.isAvailable();
     }
@@ -89,15 +89,13 @@ public class Negotiation implements Runnable {
             throw new RuntimeException(e);
         }
 
-        int maximumNumberOfOffers = 6; // limite
-
         Offer offer;
 
         // première proposition de l'acheteur
         int buyerPrice = buyer.calculatePrice(this);
-        offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate);
-        buyer.send(this, offer);
         int numberOfOffers = 1; // compteur
+        offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate, numberOfOffers);
+        buyer.send(this, offer);
 
         while (Thread.currentThread().isAlive()) {
             // avant de réagir à l'offre de l'acheteur, on vérifie si le ticket est toujours disponible
@@ -113,7 +111,7 @@ public class Negotiation implements Runnable {
                 // calcul du nouveau prix selon le ticket et la dernière offre du provider
                 int providerPrice = provider.calculatePrice(this);
 
-                offer = new Offer(provider, buyer, ticket, providerPrice, currentDate);
+                offer = new Offer(provider, buyer, ticket, providerPrice, currentDate, numberOfOffers);
                 provider.send(this, offer);
 
                 // on passe au lendemain (le fournisseur fait 1 offre par jour)
@@ -147,15 +145,15 @@ public class Negotiation implements Runnable {
             offer.setResponse(buyerResponse);
 
             // si le prix est trop bas, on continue les offres
-            if (buyerResponse == Response.BUDGET_NOT_ENOUGH) {
+            if (buyerResponse == Response.KEEP_NEGOCIATING) {
                 // on vérifie d'abord si l'acheteur a dépasse le nombre maximum d'offres
-                if (numberOfOffers == maximumNumberOfOffers) {
+                if (numberOfOffers == buyer.getMaximumNumberOfOffers()) {
                     this.status = NegotiationStatus.FAILURE;
                     System.out.println("Négociation " + Thread.currentThread().getId() + " : le nombre maximum d'offres a été dépassé.");
                     break;
                 } else {
                     buyerPrice = buyer.calculatePrice(this);
-                    offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate);
+                    offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate, numberOfOffers);
                     buyer.send(this, offer);
                     numberOfOffers++;
                 }

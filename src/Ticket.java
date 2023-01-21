@@ -100,7 +100,8 @@ public class Ticket {
         return "Ticket (Fournisseur ID : " + provider.getId() +
                 ", Destination : " + arrivalPlace +
                 ", Prix de départ : " + preferedProvidingPrice +
-                ", Prix minimum : " + minimumProvidingPrice + ")";
+                ", Prix minimum : " + minimumProvidingPrice +
+                ", Date limite de vente : " +  Utils.formatDate(latestProvidingDate) + ")";
     }
 
     @Override

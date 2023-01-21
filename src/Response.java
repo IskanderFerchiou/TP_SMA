@@ -1,5 +1,5 @@
 public enum Response {
-    BUDGET_NOT_ENOUGH,
+    KEEP_NEGOCIATING,
     LOW_PROPOSAL,
     DATE_TOO_LATE,
     PROVIDER_REJECTED,

@@ -6,9 +6,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Buyer extends Agent {
     private final List<Provider> providers; // les acheteurs connaissent tous les fournisseur
     private String destination;
-
     private String name;
 
+    private Integer maximumNumberOfOffers;
+    
     // contraintes
     private int maximumBudget;
     private Date latestBuyingDate;
@@ -25,7 +26,8 @@ public class Buyer extends Agent {
     private final CountDownLatch latch;
 
 
-    public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch) {
+    public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, 
+                 BlockingQueue<Ticket> catalogue, Date actualDate, CountDownLatch latch, Integer maximumNumberOfOffers) {
         super();
         this.name = name;
         this.destination = destination;
@@ -39,6 +41,7 @@ public class Buyer extends Agent {
         this.actualDate = actualDate;
         this.available = new AtomicBoolean(true);
         this.latch = latch;
+        this.maximumNumberOfOffers = maximumNumberOfOffers;
     }
 
 
@@ -118,6 +121,14 @@ public class Buyer extends Agent {
         this.name = name;
     }
 
+    public Integer getMaximumNumberOfOffers() {
+        return maximumNumberOfOffers;
+    }
+
+    public void setMaximumNumberOfOffers(Integer maximumNumberOfOffers) {
+        this.maximumNumberOfOffers = maximumNumberOfOffers;
+    }
+
     @Override
     public String toString() {
         return name + " (Destination : " + destination +
@@ -135,22 +146,18 @@ public class Buyer extends Agent {
         this.available.set(available);
     }
 
+    // vérification des contraintes DURANT la négociation
     public Response checkConstraint(Offer offer) {
-        Ticket ticket = offer.getTicket();
-        if (!ticket.getArrivalPlace().equals(this.destination))
-            return Response.WRONG_DESTINATION;
-        if (rejectedProvidersID.contains(offer.getProvider().getId()))
-            return Response.PROVIDER_REJECTED;
         if (offer.getOfferDate().after(this.latestBuyingDate)) {
             System.out.println("Dernière date d'achat maximum pour l'acheteur écoulée (" + this.getLatestBuyingDate() + ")");
             return Response.DATE_TOO_LATE;
         }
-        if (offer.getPrice() > this.maximumBudget)
-            return Response.BUDGET_NOT_ENOUGH;
-
+        if (offer.getPrice() > this.maximumBudget || (double) offer.getOfferNumber() / this.maximumNumberOfOffers < 0.66)
+            return Response.KEEP_NEGOCIATING;
         return Response.VALID_CONSTRAINTS;
     }
 
+    // vérrification des contraintes AVANT la négociation
     public Response checkConstraint(Ticket ticket) {
         if (!ticket.getArrivalPlace().equals(this.destination))
             return Response.WRONG_DESTINATION;
@@ -161,7 +168,7 @@ public class Buyer extends Agent {
             return Response.DATE_TOO_LATE;
         }
         if (ticket.getPreferedProvidingPrice() > this.maximumBudget)
-            return Response.BUDGET_NOT_ENOUGH;
+            return Response.KEEP_NEGOCIATING;
 
         return Response.VALID_CONSTRAINTS;
     }
@@ -175,7 +182,7 @@ public class Buyer extends Agent {
 
         // si l'acheteur n'a toujours pas fait de contre-offre, il propose en fonction du minimum entre le budget et le prix du ticket
         if (history.size() <= 1) {
-            buyerPrice = min - (int)(0.1 * min);
+            buyerPrice = min - (int)(0.2 * min);
             // A partir de la deuxième offre : on augmente le prix en fonction de la dernière offre de l'acheteur
         } else {
             Offer lastSentOffer = history.get(history.size() - 2);
@@ -234,7 +241,7 @@ public class Buyer extends Agent {
                     Response buyerResponse = this.checkConstraint(ticket);
 
                     seenTickets.add(ticket);
-                    boolean startNegotiation = buyerResponse == Response.BUDGET_NOT_ENOUGH || buyerResponse == Response.VALID_CONSTRAINTS;
+                    boolean startNegotiation = buyerResponse == Response.KEEP_NEGOCIATING || buyerResponse == Response.VALID_CONSTRAINTS;
                     // on commence les négociations si la contrainte est uniquement lié au prix
                     if (startNegotiation) {
                         Negotiation nego = new Negotiation(ticket, this, ticket.getProvider(), latch);

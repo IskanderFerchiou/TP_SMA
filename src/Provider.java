@@ -49,7 +49,7 @@ public class Provider extends Agent {
             System.out.println("Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.");
             return Response.DATE_TOO_LATE;
         }
-        if (offer.getPrice() < ticket.getMinimumProvidingPrice()){
+        if (offer.getPrice() < ticket.getMinimumProvidingPrice() || offer.getOfferNumber() < 3){
             return Response.LOW_PROPOSAL;
         }
         return Response.VALID_CONSTRAINTS;

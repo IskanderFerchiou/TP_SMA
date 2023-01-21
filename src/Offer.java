@@ -10,12 +10,16 @@ public class Offer {
 
     private int price;
 
-    public Offer(Provider provider, Buyer buyer, Ticket ticket, int price, Date date) {
+    // numéro de l'offre envoyé pendant une négociation
+    private int offerNumber;
+
+    public Offer(Provider provider, Buyer buyer, Ticket ticket, int price, Date date, int offerNumber) {
         this.provider = provider;
         this.buyer = buyer;
         this.offerDate = date;
         this.ticket = ticket;
         this.price = price;
+        this.offerNumber = offerNumber;
     }
 
     public Provider getProvider() {
@@ -64,6 +68,14 @@ public class Offer {
 
     public void setResponse(Response response) {
         this.response = response;
+    }
+
+    public int getOfferNumber() {
+        return offerNumber;
+    }
+
+    public void setOfferNumber(int offerNumber) {
+        this.offerNumber = offerNumber;
     }
 
     @Override
