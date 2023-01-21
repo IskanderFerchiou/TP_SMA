@@ -6,7 +6,6 @@ import java.util.concurrent.BlockingQueue;
 public class Provider extends Agent {
     private final List<Ticket> tickets; // les billets à vendre
     private final HashMap<Ticket, Offer> bestOffers;
-    private NegotiationStrat strat;
     private final Integer id;
 
     public Provider(Integer id, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) {
@@ -79,9 +78,9 @@ public class Provider extends Agent {
             Offer lastSentOffer = history.get(history.size() - 2);
 
             if (this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 5) {
-                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * 0.07);
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation-0.01 == 0? 0.1 : coefNegotiation-0.01));
             } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3) {
-                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * 0.07);
+                providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation-0.01 == 0? 0.1 : coefNegotiation-0.01));
             } else {
                 providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * coefNegotiation);
             }

@@ -8,6 +8,9 @@ public abstract class Agent implements Runnable  {
     private final Inbox chat;
     protected BlockingQueue<Ticket> catalogue;
 
+    protected NegotiationStrat strat;
+
+
     public Agent() {
         this.chat = new Inbox();
     }

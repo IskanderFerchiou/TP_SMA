@@ -23,8 +23,8 @@ public class Main {
         Date actualDate = df.parse("01/12/2022");
 
         String scenario = "2";
-        NegotiationStrat strat = NegotiationStrat.DEFAULT;
-        List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, latch);
+        NegotiationStrat strat = NegotiationStrat.REMAINING_TIME;
+        List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, latch, strat);
         List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue, strat);
         Utils.instantiateTickets("Tickets" + scenario + ".csv", providers);
 

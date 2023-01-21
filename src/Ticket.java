@@ -91,7 +91,8 @@ public class Ticket {
     }
 
     public int getRemainingDays(Date actualDate) {
-        return (int)ChronoUnit.DAYS.between(actualDate.toInstant(), this.latestProvidingDate.toInstant());
+        //System.out.println("Remaining days : "+(int)ChronoUnit.DAYS.between(this.latestProvidingDate.toInstant(), actualDate.toInstant()));
+        return (int)ChronoUnit.DAYS.between(this.latestProvidingDate.toInstant(), actualDate.toInstant());
     }
 
 
