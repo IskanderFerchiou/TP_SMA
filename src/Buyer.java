@@ -142,7 +142,7 @@ public class Buyer extends Agent {
 
     // vérification des contraintes DURANT la négociation
     public Response checkConstraint(Offer offer) {
-        if (offer.getOfferDate().equals(this.latestBuyingDate)) {
+        if (offer.getOfferDate().isAfter(this.latestBuyingDate)) {
             return Response.DATE_TOO_LATE;
         }
         if (offer.getPrice() > this.maximumBudget || (double) offer.getOfferNumber() / this.maximumNumberOfOffers < 0.33)
@@ -218,7 +218,7 @@ public class Buyer extends Agent {
 
             // Si la date actuelle dépasse la date limite, l'acheteur n'est plus disponible
             if (Timer.getDate().isAfter(this.latestBuyingDate)) {
-                System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(Timer.getDate()) + ") a dépassé la date limite.");
+                System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(Timer.getDate()) + ") a dépassé la date limite d'achat (" + Utils.formatDate(this.latestBuyingDate) + ").");
                 setAvailable(false);
                 break;
             }

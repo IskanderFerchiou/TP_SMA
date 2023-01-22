@@ -38,7 +38,7 @@ public class Provider extends Agent {
 
     public Response checkConstraint(Offer offer) {
         Ticket ticket = offer.getTicket();
-        if (offer.getOfferDate().equals(ticket.getLatestProvidingDate())) {
+        if (offer.getOfferDate().isAfter(ticket.getLatestProvidingDate())) {
             return Response.DATE_TOO_LATE;
         }
         if (offer.getPrice() < ticket.getMinimumProvidingPrice() || offer.getOfferNumber() < 3){

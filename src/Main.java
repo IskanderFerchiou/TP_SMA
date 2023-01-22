@@ -12,8 +12,13 @@ public class Main {
         // Initialisation du catalogue
         BlockingQueue<Ticket> catalogue = new LinkedBlockingQueue<>();
 
-        String scenario = Scenario.RejectedProvidersN_N.getFileName();
+        // Choix du scénario
+        String scenario = Scenario.ChangesOnDatesN_1.getFileName();
+
+        // Choix de la stratégie de négociation
         NegotiationStrat strat = NegotiationStrat.REMAINING_TIME;
+
+        // Instanciation des acheteurs, fournisseurs et tickets
         List<Buyer> buyers = Utils.instantiateBuyers("Buyers - " + scenario + ".csv", catalogue, strat);
         List<Provider> providers = Utils.instantiateProviders("Providers - " + scenario + ".csv", catalogue, strat);
         Utils.instantiateTickets("Tickets - " + scenario + ".csv", providers);
@@ -30,6 +35,7 @@ public class Main {
             buyersThread.add(buyerThread);
         }
 
+        // Instanciation du timer (gestion de la date)
         Timer timer = new Timer(buyersThread);
         Thread timerThread = new Thread(timer);
         timerThread.start();
