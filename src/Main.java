@@ -13,10 +13,12 @@ public class Main {
         BlockingQueue<Ticket> catalogue = new LinkedBlockingQueue<>();
 
         // Choix du scénario
-        String scenario = Scenario.ChangesOnDatesN_1.getFileName();
+        String scenario = Scenario.ChangesOnPrices1_N.getFileName();
+        System.out.println("Scénario : " + scenario);
 
         // Choix de la stratégie de négociation
-        NegotiationStrat strat = NegotiationStrat.REMAINING_TIME;
+        NegotiationStrat strat = NegotiationStrat.TICKETS_SIMILARITY;
+        System.out.println("Stratégie de négociation : " + strat + "\n");
 
         // Instanciation des acheteurs, fournisseurs et tickets
         List<Buyer> buyers = Utils.instantiateBuyers("Buyers - " + scenario + ".csv", catalogue, strat);

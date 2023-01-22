@@ -111,14 +111,8 @@ public class Ticket {
     public boolean equals(Object obj) {
         Ticket objTicket;
         if(obj instanceof Ticket) {
-            objTicket = (Ticket)obj;
-            if(objTicket.departurePlace != this.departurePlace) {
-                return false;
-            }
-            if (objTicket.arrivalPlace != this.arrivalPlace) {
-                return false;
-            }
-            return true;
+            objTicket = (Ticket) obj;
+            return objTicket.departurePlace.equals(this.departurePlace) && objTicket.arrivalPlace.equals(this.arrivalPlace);
         }
         return false;
     }

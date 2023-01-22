@@ -70,9 +70,11 @@ public class Provider extends Agent {
         } else {
             Offer lastSentOffer = history.get(history.size() - 2);
 
+            // le vendeur est plus souple si la date de vente limite approche
             if (this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(Timer.getDate()) < 2) {
                 providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation+0.03));
-            } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3) {
+            // le vendeur est plus souple si d'autres tickets similaires se trouvent sur le marché
+            } else if (this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() >= 1) {
                 providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * (coefNegotiation+0.03));
             } else {
                 providerPrice = lastSentOffer.getPrice() - (int)(lastSentOffer.getPrice() * coefNegotiation);

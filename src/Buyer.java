@@ -182,10 +182,12 @@ public class Buyer extends Agent {
 
             // marge de négociation divisé par 5 pour temporiser la négociation
             double coefNegotiation = ((double)(min - lastSentOffer.getPrice()) / min) / 5;
+            // l'acheteur propose plus pour acheter le ticket si la date de vente limite approche
             if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(Timer.getDate()) < 2)
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
-            else if(this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3)
-                buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
+            // l'acheteur propose moins si des tickets similaires se trouvent sur le marché
+            else if(this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() >= 1)
+                buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation-0.03 == 0 ? coefNegotiation : coefNegotiation-0.03));
             else
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice() * coefNegotiation);
 
