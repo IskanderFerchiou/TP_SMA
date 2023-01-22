@@ -1,6 +1,6 @@
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Buyer extends Agent {
@@ -12,22 +12,17 @@ public class Buyer extends Agent {
     
     // contraintes
     private int maximumBudget;
-    private Date latestBuyingDate;
+    private LocalDate latestBuyingDate;
     private final List<Integer> rejectedProvidersID;
 
     // preferences
-    private Date preferedBuyingDate;
+    private LocalDate preferedBuyingDate;
     private final List<Integer> preferredProvidersID;
-
-    private Date actualDate;
 
     private final AtomicBoolean available;
 
-    private Phaser buyerPhaser;
-
-
-    public Buyer(String name, String destination, int maximumBudget, Date latestBuyingDate, Date preferedBuyingDate, 
-                 BlockingQueue<Ticket> catalogue, Date actualDate, Phaser buyerPhaser, Integer maximumNumberOfOffers, NegotiationStrat strat) {
+    public Buyer(String name, String destination, int maximumBudget, LocalDate latestBuyingDate, LocalDate preferedBuyingDate,
+                 BlockingQueue<Ticket> catalogue, Integer maximumNumberOfOffers, NegotiationStrat strat) {
         super();
         this.name = name;
         this.destination = destination;
@@ -38,10 +33,7 @@ public class Buyer extends Agent {
         this.rejectedProvidersID = new ArrayList<>();
         this.preferredProvidersID = new ArrayList<>();
         this.catalogue = catalogue;
-        this.actualDate = actualDate;
         this.available = new AtomicBoolean(true);
-        this.buyerPhaser = buyerPhaser;
-        buyerPhaser.register();
         this.maximumNumberOfOffers = maximumNumberOfOffers;
         this.strat = strat;
     }
@@ -63,19 +55,19 @@ public class Buyer extends Agent {
         this.maximumBudget = maximumBudget;
     }
 
-    public Date getLatestBuyingDate() {
+    public LocalDate getLatestBuyingDate() {
         return latestBuyingDate;
     }
 
-    public void setLatestBuyingDate(Date latestBuyingDate) {
+    public void setLatestBuyingDate(LocalDate latestBuyingDate) {
         this.latestBuyingDate = latestBuyingDate;
     }
 
-    public Date getPreferedBuyingDate() {
+    public LocalDate getPreferedBuyingDate() {
         return preferedBuyingDate;
     }
 
-    public void setPreferedBuyingDate(Date preferedBuyingDate) {
+    public void setPreferedBuyingDate(LocalDate preferedBuyingDate) {
         this.preferedBuyingDate = preferedBuyingDate;
     }
 
@@ -140,7 +132,7 @@ public class Buyer extends Agent {
                 ", Fournisseurs detestés : " + Arrays.toString(rejectedProvidersID.toArray()) + ")";
     }
 
-    public boolean isAvailable() {
+    public synchronized boolean isAvailable() {
         return available.get();
     }
 
@@ -164,7 +156,7 @@ public class Buyer extends Agent {
             return Response.WRONG_DESTINATION;
         if (rejectedProvidersID.contains(ticket.getProvider().getId()))
             return Response.PROVIDER_REJECTED;
-        if (ticket.getPreferedProvidingDate().after(this.latestBuyingDate)) {
+        if (ticket.getPreferedProvidingDate().isAfter(this.latestBuyingDate)) {
             System.out.println("La date de mise en vente du ticket dépasse la dernière date d'achat possible (" + Utils.formatDate(this.getLatestBuyingDate()) + ")");
             return Response.DATE_TOO_LATE;
         }
@@ -190,13 +182,19 @@ public class Buyer extends Agent {
 
             // marge de négociation divisé par 5 pour temporiser la négociation
             double coefNegotiation = ((double)(min - lastSentOffer.getPrice()) / min) / 5;
-            if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(negotiation.getCurrentDate()) < 2)
+            if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(Timer.getDate()) < 2)
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
             else if(this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() > 3)
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
             else
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice() * coefNegotiation);
+
+            // si la négociation va se terminer, le client tente le tout pour le tout et met son budget maximum
+            if (lastSentOffer.getOfferNumber() == this.maximumNumberOfOffers - 1) {
+                buyerPrice = min;
+            }
         }
+
 
         // si le nouveau prix calculé est au dessus du budget maximum, on prend le budget maximum
         if (buyerPrice > this.maximumBudget) {
@@ -208,7 +206,6 @@ public class Buyer extends Agent {
 
     @Override
     public void run() {
-        buyerPhaser.arriveAndAwaitAdvance();
         List<Ticket> seenTickets = new ArrayList<>();
         List<Ticket> addedTickets;
         List<Negotiation> negotiations = new ArrayList<>();
@@ -217,15 +214,11 @@ public class Buyer extends Agent {
 
         boolean preferredNegotiations = false;
 
-        boolean runPhaser = false;
-
-        Phaser negotiationPhaser = new Phaser(1);
-
         while (isAvailable()) {
 
             // Si la date actuelle dépasse la date limite, l'acheteur n'est plus disponible
-            if (this.actualDate.after(this.latestBuyingDate)) {
-                System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(this.actualDate) + ") a dépassé la date limite.");
+            if (Timer.getDate().isAfter(this.latestBuyingDate)) {
+                System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(Timer.getDate()) + ") a dépassé la date limite.");
                 setAvailable(false);
                 break;
             }
@@ -250,21 +243,13 @@ public class Buyer extends Agent {
                     boolean startNegotiation = buyerResponse == Response.KEEP_NEGOCIATING || buyerResponse == Response.VALID_CONSTRAINTS;
                     // on commence les négociations si la contrainte est uniquement lié au prix
                     if (startNegotiation) {
-                        Negotiation nego = new Negotiation(ticket, this, ticket.getProvider(), negotiationPhaser);
+                        Negotiation nego = new Negotiation(ticket, this, ticket.getProvider());
                         negotiations.add(nego);
 
                         Thread negotiationThread = new Thread(nego);
                         negotiationThread.start();
-
-                        runPhaser = true;
                     }
                 }
-            }
-
-            // début des négociations en même temps
-            if (runPhaser) {
-                negotiationPhaser.arriveAndAwaitAdvance();
-                runPhaser = false;
             }
 
             // on réinitialise cette variable avant de vérifier à nouveau si une négotiation avec un fournisseur préféré est en cours
@@ -275,10 +260,6 @@ public class Buyer extends Agent {
                 Negotiation n = iterator.next();
                 // si une négociation a échoué ou réussi
                 if (n.getStatus() != NegotiationStatus.RUNNING) {
-                    // on prend uniquement la date de la négociation si elle est plus grande
-                    if (n.getCurrentDate().after(this.actualDate)) {
-                        this.actualDate = n.getCurrentDate();
-                    }
                     // on retire la negociation de la liste des négociations en cours.
                     iterator.remove();
                 }
@@ -287,12 +268,6 @@ public class Buyer extends Agent {
                 if (n.getStatus() == NegotiationStatus.RUNNING && this.preferredProvidersID.contains(n.getProvider().getId())) {
                     preferredNegotiations = true;
                 }
-            }
-
-            // Si aucune négociations n'est en cours et qu'aucun nouveau ticket n'a été ajouté, on passe au jour suivant
-            if (negotiations.isEmpty() && addedTickets.isEmpty()) {
-                this.actualDate = Utils.nextDay(this.actualDate);
-                // System.out.println(Thread.currentThread().getName() + " : pas de ticket sur le marché, J+1 => " + Utils.formatDate(this.actualDate));
             }
         }
     }

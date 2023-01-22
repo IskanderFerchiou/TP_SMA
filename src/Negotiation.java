@@ -1,6 +1,4 @@
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Phaser;
 
 public class Negotiation implements Runnable {
 
@@ -8,50 +6,41 @@ public class Negotiation implements Runnable {
     private final Provider provider;
     private final Buyer buyer;
 
-    private Date currentDate;
-
     private NegotiationStatus status;
 
-    private final Phaser phaser;
+    private String issue;
 
-    public Negotiation(Ticket ticket, Buyer buyer, Provider provider, Phaser phaser) {
+    public Negotiation(Ticket ticket, Buyer buyer, Provider provider) {
         this.provider = provider;
         this.buyer = buyer;
         this.ticket = ticket;
         this.status = NegotiationStatus.RUNNING;
-        this.currentDate = ticket.getPreferedProvidingDate();
-        this.phaser = phaser;
-        phaser.register();
+        this.issue = "";
     }
 
     public NegotiationStatus getStatus() {
         return status;
     }
 
-    public Date getCurrentDate() {
-        return currentDate;
-    }
-
     public Provider getProvider() {
         return provider;
     }
 
-
-    public boolean isTicketNotAvailable() {
+    public synchronized boolean isTicketNotAvailable() {
         synchronized (Ticket.class) {
             if (ticket.isNotAvailable()) {
                 this.status = NegotiationStatus.FAILURE;
-                System.out.println("Négociation " + Thread.currentThread().getId() + " : " + ticket + " a été vendu à un autre acheteur.");
+                issue = "le ticket a été vendu à un autre acheteur.";
             }
             return ticket.isNotAvailable();
         }
     }
 
-    public boolean isBuyerNotAvailable() {
+    public synchronized boolean isBuyerNotAvailable() {
         synchronized (Ticket.class) {
             if (!buyer.isAvailable()) {
                 this.status = NegotiationStatus.FAILURE;
-                System.out.println("Négociation " + Thread.currentThread().getId() + " : " + buyer.getName() + " n'est plus disponible.");
+                issue = "le client n'est plus disponible.";
             }
             return !buyer.isAvailable();
         }
@@ -68,7 +57,9 @@ public class Negotiation implements Runnable {
         discussion.append("\n------------------ Historique de la négociation ").append(Thread.currentThread().getId()).append(" ------------------ \n");
 
         discussion.append("- ").append(this.ticket).append("\n");
-        discussion.append("- Client : ").append(this.buyer).append("\n\n");
+        discussion.append("- Client : ").append(this.buyer).append("\n");
+        discussion.append("- Status : ").append(this.status).append("\n");
+        discussion.append("- Raison : ").append(issue).append("\n\n");
 
         for (int i = 0; i < history.size(); i++) {
 
@@ -88,14 +79,12 @@ public class Negotiation implements Runnable {
 
     @Override
     public void run() {
-        phaser.arriveAndAwaitAdvance();
-
         Offer offer;
 
         // première proposition de l'acheteur
         int buyerPrice = buyer.calculatePrice(this);
         int numberOfOffers = 1; // compteur
-        offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate, numberOfOffers);
+        offer = new Offer(provider, buyer, ticket, buyerPrice, Timer.getDate(), numberOfOffers);
         buyer.send(this, offer);
 
         while (Thread.currentThread().isAlive()) {
@@ -112,64 +101,69 @@ public class Negotiation implements Runnable {
                 // calcul du nouveau prix selon le ticket et la dernière offre du provider
                 int providerPrice = provider.calculatePrice(this);
 
-                offer = new Offer(provider, buyer, ticket, providerPrice, currentDate, numberOfOffers);
+                offer = new Offer(provider, buyer, ticket, providerPrice, Timer.getDate(), numberOfOffers);
                 provider.send(this, offer);
 
-                // on passe au lendemain (le fournisseur fait 1 offre par jour)
-//                synchronized (Negotiation.class){
-//                    currentDate = Utils.nextDay(currentDate);
-//                }
-                currentDate = Utils.nextDay(currentDate);
+
 
                 // sinon on arrête la négociation car la vente a été effectué
             } else if (providerResponse == Response.VALID_CONSTRAINTS) {
-                if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
 
                 // un seul thread pour la phrase de paiement (vente du ticket)
                 synchronized (Ticket.class) {
+                    if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
                     this.status = NegotiationStatus.SUCCESS;
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le fournisseur a vendu le " + ticket + " à " + buyer.getName() + ".");
+                    issue = "le fournisseur a vendu le ticket.";
                     break;
                 }
                 // ou une contrainte majeur n'a pas été respecté
             } else {
                 this.status = NegotiationStatus.FAILURE;
-                System.out.println("Négociation " + Thread.currentThread().getId() + " : Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.");
+                issue = "Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.";
                 break;
             }
 
             // avant de réagir à l'offre du vendeur, on vérifie si l'acheteur est toujours à la recherche d'un ticket
             if (isBuyerNotAvailable()) break;
 
+
             // L'acheteur étudie l'offre selon ses contraintes et répond au fournisseur
             Response buyerResponse = buyer.checkConstraint(offer);
             offer.setResponse(buyerResponse);
+            // on passe au lendemain (le fournisseur fait 1 offre par jour)
+            synchronized (Utils.lock) {
+                try {
+                    Utils.lock.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
             // si le prix est trop bas, on continue les offres
             if (buyerResponse == Response.KEEP_NEGOCIATING) {
                 // on vérifie d'abord si l'acheteur a dépasse le nombre maximum d'offres
                 if (numberOfOffers == buyer.getMaximumNumberOfOffers()) {
                     this.status = NegotiationStatus.FAILURE;
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le nombre maximum d'offres a été dépassé.");
+                    issue = "le nombre maximum d'offres a été dépassé.";
                     break;
                 } else {
                     buyerPrice = buyer.calculatePrice(this);
                     numberOfOffers++;
-                    offer = new Offer(provider, buyer, ticket, buyerPrice, currentDate, numberOfOffers);
+                    offer = new Offer(provider, buyer, ticket, buyerPrice, Timer.getDate(), numberOfOffers);
                     buyer.send(this, offer);
                 }
                 // sinon on arrête la négociation car l'achat a été effectué
             } else if (buyerResponse == Response.VALID_CONSTRAINTS) {
-                if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
 
                 // un seul thread pour la phrase de paiement (vente du ticket)
                 synchronized (Ticket.class) {
+                    if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
                     this.status = NegotiationStatus.SUCCESS;
-                    System.out.println("Négociation " + Thread.currentThread().getId() + " : le client " + buyer.getName() + " a acheté le " + ticket + ".");
+                    issue = "le client a acheté le ticket.";
                     break;
 
                 }
@@ -177,15 +171,12 @@ public class Negotiation implements Runnable {
                 // ou une contrainte majeur n'a pas été respecté
             } else {
                 this.status = NegotiationStatus.FAILURE;
-                System.out.println("Négociation " + Thread.currentThread().getId() + " : Date d'achat maximum écoulée pour " + buyer.getName() + " (" + Utils.formatDate(buyer.getLatestBuyingDate()) + ").");
+                issue = "Date d'achat maximum écoulée (" + Utils.formatDate(buyer.getLatestBuyingDate()) + ").";
                 break;
             }
+
+
         }
         displayDiscussion();
     }
-
-//    private synchronized boolean endNegociationProcess() {
-//        // on procéde à la vente si le ticket est toujours en vente et que l'acheteur est toujours à la recherche d'un ticket
-//
-//    }
 }

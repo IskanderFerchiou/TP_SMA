@@ -1,9 +1,10 @@
+import java.time.LocalDate;
 import java.util.Date;
 
 public class Offer {
     private Provider provider;
     private Buyer buyer;
-    private Date offerDate;
+    private LocalDate offerDate;
     private Ticket ticket;
 
     private Response response;
@@ -13,7 +14,7 @@ public class Offer {
     // numéro de l'offre envoyé pendant une négociation
     private int offerNumber;
 
-    public Offer(Provider provider, Buyer buyer, Ticket ticket, int price, Date date, int offerNumber) {
+    public Offer(Provider provider, Buyer buyer, Ticket ticket, int price, LocalDate date, int offerNumber) {
         this.provider = provider;
         this.buyer = buyer;
         this.offerDate = date;
@@ -38,11 +39,11 @@ public class Offer {
         this.buyer = buyer;
     }
 
-    public Date getOfferDate() {
+    public LocalDate getOfferDate() {
         return offerDate;
     }
 
-    public void setOfferDate(Date offerDate) {
+    public void setOfferDate(LocalDate offerDate) {
         this.offerDate = offerDate;
     }
 

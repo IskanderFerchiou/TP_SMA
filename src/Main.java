@@ -1,12 +1,9 @@
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Phaser;
 
 public class Main {
 
@@ -15,29 +12,26 @@ public class Main {
         // Initialisation du catalogue
         BlockingQueue<Ticket> catalogue = new LinkedBlockingQueue<>();
 
-        // Signal de départ
-        Phaser phaser = new Phaser(1);
-
-        // Date actuelle
-        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-        Date actualDate = df.parse("01/12/2022");
-
-        String scenario = "2 - bis";
+        String scenario = Scenario.RejectedProvidersN_N.getFileName();
         NegotiationStrat strat = NegotiationStrat.REMAINING_TIME;
-        List<Buyer> buyers = Utils.instantiateBuyers("Buyers" + scenario + ".csv", catalogue, actualDate, phaser, strat);
-        List<Provider> providers = Utils.instantiateProviders("Providers" + scenario + ".csv", catalogue, strat);
-        Utils.instantiateTickets("Tickets" + scenario + ".csv", providers);
+        List<Buyer> buyers = Utils.instantiateBuyers("Buyers - " + scenario + ".csv", catalogue, strat);
+        List<Provider> providers = Utils.instantiateProviders("Providers - " + scenario + ".csv", catalogue, strat);
+        Utils.instantiateTickets("Tickets - " + scenario + ".csv", providers);
 
         for (Provider p: providers) {
             Thread providerThread = new Thread(p);
             providerThread.start();
         }
 
+        List<Thread> buyersThread = new ArrayList<>();
         for (Buyer b: buyers) {
             Thread buyerThread = new Thread(b);
             buyerThread.start();
+            buyersThread.add(buyerThread);
         }
 
-        phaser.arriveAndAwaitAdvance();
+        Timer timer = new Timer(buyersThread);
+        Thread timerThread = new Thread(timer);
+        timerThread.start();
     }
 }

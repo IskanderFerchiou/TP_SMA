@@ -1,27 +1,17 @@
 import java.io.*;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Phaser;
 
 public class Utils {
 
-    public static String formatDate(Date date) {
-        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-        return df.format(date);
-    }
+    static final Object lock = new Object(); // shared object to synchronize on
 
-    public static Date nextDay(Date date) {
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        c.add(Calendar.DATE, 1);
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-        return c.getTime();
+    public static String formatDate(LocalDate date) {
+        DateTimeFormatter  df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return df.format(date);
     }
 
     public static List<Provider> instantiateProviders(String filename, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) throws FileNotFoundException {
@@ -44,10 +34,10 @@ public class Utils {
         return providers;
     }
 
-    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, Date actualDate, Phaser phaser, NegotiationStrat strat) throws IOException, ParseException {
+    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) throws IOException, ParseException {
         File file = new File("datasets/" + filename);
         List<Buyer> buyers = new ArrayList<>();
-        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+        DateTimeFormatter  df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         if (file.exists()) {
             FileReader reader = new FileReader(file);
@@ -64,18 +54,16 @@ public class Utils {
                 Buyer buyer = new Buyer(spllitedLine[0],
                         spllitedLine[1],
                         Integer.parseInt(spllitedLine[2]),
-                        df.parse(spllitedLine[3]),
-                        df.parse(spllitedLine[4]),
+                        LocalDate.parse(spllitedLine[3], df),
+                        LocalDate.parse(spllitedLine[4], df),
                         catalogue,
-                        actualDate,
-                        phaser,
                         6, strat);
 
                 if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {
                     buyer.addPreferredProviderID(Integer.valueOf(spllitedLine[5]));
                 }
 
-                if (spllitedLine.length > 5 && spllitedLine[6] != null && !spllitedLine[6].equals("")) {
+                if (spllitedLine.length > 6 && spllitedLine[6] != null && !spllitedLine[6].equals("")) {
                     buyer.addRejectedProviderID(Integer.valueOf(spllitedLine[6]));
                 }
 
@@ -90,7 +78,7 @@ public class Utils {
 
     public static void instantiateTickets(String filename, List<Provider> providers) throws IOException, ParseException {
         File file = new File("datasets/" + filename);
-        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         if (file.exists()) {
             FileReader reader = new FileReader(file);
             BufferedReader br = new BufferedReader(reader);
@@ -111,8 +99,8 @@ public class Utils {
                         spllitedLine[1], // arrivalPlace
                         Integer.parseInt(spllitedLine[3]), // preferedProvidingPrice
                         Integer.parseInt(spllitedLine[2]), // minimumProvidingPrice
-                        df.parse(spllitedLine[5]), // preferedProvidingDate
-                        df.parse(spllitedLine[4]) // latestProvidingDate
+                        LocalDate.parse(spllitedLine[5], df), // preferedProvidingDate
+                        LocalDate.parse(spllitedLine[4], df) // latestProvidingDate
                 );
 
                 provider.addTicket(ticket);

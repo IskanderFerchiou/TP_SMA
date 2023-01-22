@@ -1,3 +1,4 @@
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,12 +12,12 @@ public class Ticket {
     // contraintes et préférences du vendeur
     private int preferedProvidingPrice; // prix désiré de vente du vendeur
     private int minimumProvidingPrice; // prix minimum de vente du vendeur
-    private Date preferedProvidingDate; // date de vente désirée du vendeur
-    private Date latestProvidingDate; // date de vente au plus tard du vendeur
+    private LocalDate preferedProvidingDate; // date de vente désirée du vendeur
+    private LocalDate latestProvidingDate; // date de vente au plus tard du vendeur
 
     private final AtomicBoolean available  = new AtomicBoolean(true);
 
-    public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, Date preferedProvidingDate, Date latestProvidingDate) {
+    public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, LocalDate preferedProvidingDate, LocalDate latestProvidingDate) {
         this.provider = provider;
         this.departurePlace = departurePlace;
         this.arrivalPlace = arrivalPlace;
@@ -66,23 +67,23 @@ public class Ticket {
         this.minimumProvidingPrice = minimumProvidingPrice;
     }
 
-    public Date getPreferedProvidingDate() {
+    public LocalDate getPreferedProvidingDate() {
         return this.preferedProvidingDate;
     }
 
-    public void setPreferedProvidingDate(Date preferedProvidingDate) {
+    public void setPreferedProvidingDate(LocalDate preferedProvidingDate) {
         this.preferedProvidingDate = preferedProvidingDate;
     }
 
-    public Date getLatestProvidingDate() {
+    public LocalDate getLatestProvidingDate() {
         return this.latestProvidingDate;
     }
 
-    public void setLatestProvidingDate(Date latestProvidingDate) {
+    public void setLatestProvidingDate(LocalDate latestProvidingDate) {
         this.latestProvidingDate = latestProvidingDate;
     }
 
-    public boolean isNotAvailable() {
+    public synchronized boolean isNotAvailable() {
         return !this.available.get();
     }
 
@@ -90,9 +91,10 @@ public class Ticket {
         this.available.set(available);
     }
 
-    public int getRemainingDays(Date actualDate) {
+    public int getRemainingDays(LocalDate actualDate) {
+        return (int) actualDate.datesUntil(this.latestProvidingDate).count();
         //System.out.println("Remaining days : "+(int)ChronoUnit.DAYS.between(this.latestProvidingDate.toInstant(), actualDate.toInstant()));
-        return (int)ChronoUnit.DAYS.between(this.latestProvidingDate.toInstant(), actualDate.toInstant());
+         //(int)ChronoUnit.DAYS.between(actualDate, this.latestProvidingDate);
     }
 
 
