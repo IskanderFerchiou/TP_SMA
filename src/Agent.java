@@ -10,7 +10,6 @@ public abstract class Agent implements Runnable  {
 
     protected NegotiationStrat strat;
 
-
     public Agent() {
         this.chat = new Inbox();
     }
@@ -26,7 +25,7 @@ public abstract class Agent implements Runnable  {
     public List<Ticket> findSimilarTickets(Ticket ticket) {
         List<Ticket> similarTickets = new ArrayList<>();
         for (Ticket t : catalogue) {
-            if(ticket.equals(t))
+            if(ticket.isSimilar(t))
                 similarTickets.add(t);
         }
         similarTickets.remove(ticket);

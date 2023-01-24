@@ -55,16 +55,15 @@ public class Utils {
                         spllitedLine[1],
                         Integer.parseInt(spllitedLine[2]),
                         LocalDate.parse(spllitedLine[3], df),
-                        LocalDate.parse(spllitedLine[4], df),
                         catalogue,
                         6, strat);
 
-                if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {
-                    buyer.addPreferredProviderID(Integer.valueOf(spllitedLine[5]));
+                if (spllitedLine.length > 4 && spllitedLine[4] != null && !spllitedLine[4].equals("")) {
+                    buyer.addPreferredProviderID(Integer.valueOf(spllitedLine[4]));
                 }
 
-                if (spllitedLine.length > 6 && spllitedLine[6] != null && !spllitedLine[6].equals("")) {
-                    buyer.addRejectedProviderID(Integer.valueOf(spllitedLine[6]));
+                if (spllitedLine.length > 5 && spllitedLine[5] != null && !spllitedLine[5].equals("")) {
+                    buyer.addRejectedProviderID(Integer.valueOf(spllitedLine[5]));
                 }
 
                 buyers.add(buyer);

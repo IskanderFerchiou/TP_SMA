@@ -19,16 +19,8 @@ public class Provider extends Agent {
         return id;
     }
 
-    public List<Ticket> getTickets() {
-        return tickets;
-    }
-
     public void addTicket (Ticket ticket) {
         this.tickets.add(ticket);
-    }
-
-    public void removeTicket (Ticket ticket) {
-        this.tickets.remove(ticket);
     }
 
     public void sellTicket(Ticket ticket) {
@@ -45,14 +37,6 @@ public class Provider extends Agent {
             return Response.LOW_PROPOSAL;
         }
         return Response.VALID_CONSTRAINTS;
-    }
-
-    public NegotiationStrat getStrat() {
-        return strat;
-    }
-
-    public void setStrat(NegotiationStrat strat){
-        this.strat = strat;
     }
 
     public int calculatePrice(Negotiation negotiation) {

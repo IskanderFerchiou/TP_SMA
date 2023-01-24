@@ -1,19 +1,17 @@
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Ticket {
     private Provider provider;
-
-    private String departurePlace;
-    private String arrivalPlace;
+    private final String departurePlace;
+    private final String arrivalPlace;
 
     // contraintes et préférences du vendeur
-    private int preferedProvidingPrice; // prix désiré de vente du vendeur
-    private int minimumProvidingPrice; // prix minimum de vente du vendeur
-    private LocalDate preferedProvidingDate; // date de vente désirée du vendeur
-    private LocalDate latestProvidingDate; // date de vente au plus tard du vendeur
+    private final int preferedProvidingPrice; // prix désiré de vente du vendeur
+    private final int minimumProvidingPrice; // prix minimum de vente du vendeur
+    private final LocalDate preferedProvidingDate; // date de vente désirée du vendeur
+    private final LocalDate latestProvidingDate; // date de vente au plus tard du vendeur
 
     private final AtomicBoolean available  = new AtomicBoolean(true);
 
@@ -35,52 +33,24 @@ public class Ticket {
         this.provider = provider;
     }
 
-    public String getDeparturePlace() {
-        return departurePlace;
-    }
-
-    public void setDeparturePlace(String departurePlace) {
-        this.departurePlace = departurePlace;
-    }
-
     public String getArrivalPlace() {
         return arrivalPlace;
-    }
-
-    public void setArrivalPlace(String arrivalPlace) {
-        this.arrivalPlace = arrivalPlace;
     }
 
     public int getPreferedProvidingPrice() {
         return this.preferedProvidingPrice;
     }
 
-    public void setPreferedProvidingPrice(int preferedProvidingPrice) {
-        this.preferedProvidingPrice = preferedProvidingPrice;
-    }
-
     public int getMinimumProvidingPrice() {
         return this.minimumProvidingPrice;
-    }
-
-    public void setMinimumProvidingPrice(int minimumProvidingPrice) {
-        this.minimumProvidingPrice = minimumProvidingPrice;
     }
 
     public LocalDate getPreferedProvidingDate() {
         return this.preferedProvidingDate;
     }
 
-    public void setPreferedProvidingDate(LocalDate preferedProvidingDate) {
-        this.preferedProvidingDate = preferedProvidingDate;
-    }
-
     public LocalDate getLatestProvidingDate() {
         return this.latestProvidingDate;
-    }
-
-    public void setLatestProvidingDate(LocalDate latestProvidingDate) {
-        this.latestProvidingDate = latestProvidingDate;
     }
 
     public synchronized boolean isNotAvailable() {
@@ -92,11 +62,8 @@ public class Ticket {
     }
 
     public int getRemainingDays(LocalDate actualDate) {
-        // return (int) actualDate.datesUntil(this.latestProvidingDate).count();
-        //System.out.println("Remaining days : "+(int)ChronoUnit.DAYS.between(this.latestProvidingDate.toInstant(), actualDate.toInstant()));
         return (int)ChronoUnit.DAYS.between(actualDate, this.latestProvidingDate);
     }
-
 
     @Override
     public String toString() {
@@ -107,8 +74,7 @@ public class Ticket {
                 ", Date limite de vente : " +  Utils.formatDate(latestProvidingDate) + ")";
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    public boolean isSimilar(Object obj) {
         Ticket objTicket;
         if(obj instanceof Ticket) {
             objTicket = (Ticket) obj;

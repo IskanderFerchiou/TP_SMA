@@ -29,8 +29,7 @@ public class Negotiation implements Runnable {
     public synchronized boolean isTicketNotAvailable() {
         synchronized (Ticket.class) {
             if (ticket.isNotAvailable()) {
-                this.status = NegotiationStatus.FAILURE;
-                issue = "le ticket a été vendu à un autre acheteur.";
+                stopNegociation(NegotiationStatus.FAILURE,  "le ticket a été vendu à un autre acheteur.");
             }
             return ticket.isNotAvailable();
         }
@@ -39,8 +38,7 @@ public class Negotiation implements Runnable {
     public synchronized boolean isBuyerNotAvailable() {
         synchronized (Ticket.class) {
             if (!buyer.isAvailable()) {
-                this.status = NegotiationStatus.FAILURE;
-                issue = "le client n'est plus disponible.";
+                stopNegociation(NegotiationStatus.FAILURE,  "le client n'est plus disponible.");
             }
             return !buyer.isAvailable();
         }
@@ -50,7 +48,12 @@ public class Negotiation implements Runnable {
         return ticket;
     }
 
-    public void displayDiscussion() {
+    private void stopNegociation(NegotiationStatus status, String issue) {
+        this.status = status;
+        this.issue = issue;
+    }
+
+    private void displayDiscussion() {
         StringBuilder discussion = new StringBuilder();
         List<Offer> history = this.buyer.getOffers(this);
 
@@ -84,7 +87,7 @@ public class Negotiation implements Runnable {
         // première proposition de l'acheteur
         int buyerPrice = buyer.calculatePrice(this);
         int numberOfOffers = 1; // compteur
-        offer = new Offer(provider, buyer, ticket, buyerPrice, Timer.getDate(), numberOfOffers);
+        offer = new Offer(ticket, buyerPrice, Timer.getDate(), numberOfOffers);
         buyer.send(this, offer);
 
         while (Thread.currentThread().isAlive()) {
@@ -101,10 +104,8 @@ public class Negotiation implements Runnable {
                 // calcul du nouveau prix selon le ticket et la dernière offre du provider
                 int providerPrice = provider.calculatePrice(this);
 
-                offer = new Offer(provider, buyer, ticket, providerPrice, Timer.getDate(), numberOfOffers);
+                offer = new Offer(ticket, providerPrice, Timer.getDate(), numberOfOffers);
                 provider.send(this, offer);
-
-
 
                 // sinon on arrête la négociation car la vente a été effectué
             } else if (providerResponse == Response.VALID_CONSTRAINTS) {
@@ -114,14 +115,12 @@ public class Negotiation implements Runnable {
                     if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
-                    this.status = NegotiationStatus.SUCCESS;
-                    issue = "le fournisseur a vendu le ticket.";
+                    stopNegociation(NegotiationStatus.SUCCESS, "le fournisseur a vendu le ticket.");
                     break;
                 }
                 // ou une contrainte majeur n'a pas été respecté
             } else {
-                this.status = NegotiationStatus.FAILURE;
-                issue = "Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.";
+                stopNegociation(NegotiationStatus.FAILURE, "Dernier jour de vente (" + ticket.getLatestProvidingDate() + ") terminé.");
                 break;
             }
 
@@ -145,13 +144,12 @@ public class Negotiation implements Runnable {
             if (buyerResponse == Response.KEEP_NEGOCIATING) {
                 // on vérifie d'abord si l'acheteur a dépasse le nombre maximum d'offres
                 if (numberOfOffers == buyer.getMaximumNumberOfOffers()) {
-                    this.status = NegotiationStatus.FAILURE;
-                    issue = "le nombre maximum d'offres a été dépassé.";
+                    stopNegociation(NegotiationStatus.FAILURE, "le nombre maximum d'offres a été dépassé.");
                     break;
                 } else {
                     buyerPrice = buyer.calculatePrice(this);
                     numberOfOffers++;
-                    offer = new Offer(provider, buyer, ticket, buyerPrice, Timer.getDate(), numberOfOffers);
+                    offer = new Offer(ticket, buyerPrice, Timer.getDate(), numberOfOffers);
                     buyer.send(this, offer);
                 }
                 // sinon on arrête la négociation car l'achat a été effectué
@@ -162,16 +160,14 @@ public class Negotiation implements Runnable {
                     if (isTicketNotAvailable() || isBuyerNotAvailable()) break;
                     provider.sellTicket(ticket);
                     buyer.setAvailable(false);
-                    this.status = NegotiationStatus.SUCCESS;
-                    issue = "le client a acheté le ticket.";
+                    stopNegociation(NegotiationStatus.SUCCESS, "le client a acheté le ticket.");
                     break;
 
                 }
 
                 // ou une contrainte majeur n'a pas été respecté
             } else {
-                this.status = NegotiationStatus.FAILURE;
-                issue = "Date d'achat maximum écoulée (" + Utils.formatDate(buyer.getLatestBuyingDate()) + ").";
+                stopNegociation(NegotiationStatus.FAILURE, "Date d'achat maximum écoulée (" + Utils.formatDate(buyer.getLatestBuyingDate()) + ").");
                 break;
             }
 

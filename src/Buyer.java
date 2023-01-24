@@ -4,123 +4,56 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Buyer extends Agent {
-    private final List<Provider> providers; // les acheteurs connaissent tous les fournisseur
-    private String destination;
-    private String name;
-
-    private Integer maximumNumberOfOffers;
+    private final String destination;
+    private final String name;
+    private final Integer maximumNumberOfOffers;
+    private final List<Ticket> seenTickets;
     
     // contraintes
-    private int maximumBudget;
-    private LocalDate latestBuyingDate;
+    private final int maximumBudget;
+    private final LocalDate latestBuyingDate;
     private final List<Integer> rejectedProvidersID;
 
     // preferences
-    private LocalDate preferedBuyingDate;
     private final List<Integer> preferredProvidersID;
 
     private final AtomicBoolean available;
 
-    public Buyer(String name, String destination, int maximumBudget, LocalDate latestBuyingDate, LocalDate preferedBuyingDate,
+    public Buyer(String name, String destination, int maximumBudget, LocalDate latestBuyingDate,
                  BlockingQueue<Ticket> catalogue, Integer maximumNumberOfOffers, NegotiationStrat strat) {
         super();
         this.name = name;
         this.destination = destination;
         this.maximumBudget = maximumBudget;
         this.latestBuyingDate = latestBuyingDate;
-        this.preferedBuyingDate = preferedBuyingDate;
-        this.providers = new ArrayList<>();
         this.rejectedProvidersID = new ArrayList<>();
         this.preferredProvidersID = new ArrayList<>();
+        this.seenTickets = new ArrayList<>();
         this.catalogue = catalogue;
         this.available = new AtomicBoolean(true);
         this.maximumNumberOfOffers = maximumNumberOfOffers;
         this.strat = strat;
     }
 
-
-    public String getDestination() {
-        return destination;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-
-    public int getMaximumBudget() {
-        return maximumBudget;
-    }
-
-    public void setMaximumBudget(int maximumBudget) {
-        this.maximumBudget = maximumBudget;
-    }
-
     public LocalDate getLatestBuyingDate() {
         return latestBuyingDate;
-    }
-
-    public void setLatestBuyingDate(LocalDate latestBuyingDate) {
-        this.latestBuyingDate = latestBuyingDate;
-    }
-
-    public LocalDate getPreferedBuyingDate() {
-        return preferedBuyingDate;
-    }
-
-    public void setPreferedBuyingDate(LocalDate preferedBuyingDate) {
-        this.preferedBuyingDate = preferedBuyingDate;
-    }
-
-    public List<Provider> getProviders() {
-        return this.providers;
-    }
-
-    public void addProvider(Provider provider) {
-        this.providers.add(provider);
-    }
-
-    public void removeProvider(Provider provider) {
-        this.providers.remove(provider);
-    }
-
-    public List<Integer> getRejectedProvidersID() {
-        return this.rejectedProvidersID;
     }
 
     public void addRejectedProviderID(Integer providerID) {
         this.rejectedProvidersID.add(providerID);
     }
 
-    public void removeRejectedProviderID(Integer providerID) {
-        this.rejectedProvidersID.remove(providerID);
-    }
-
-    public List<Integer> getPreferredProvidersID() {
-        return this.preferredProvidersID;
-    }
-
     public void addPreferredProviderID(Integer providerID) {
         this.preferredProvidersID.add(providerID);
-    }
-
-    public void removePreferredProviderID(Integer providerID) {
-        this.preferredProvidersID.remove(providerID);
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public Integer getMaximumNumberOfOffers() {
         return maximumNumberOfOffers;
-    }
-
-    public void setMaximumNumberOfOffers(Integer maximumNumberOfOffers) {
-        this.maximumNumberOfOffers = maximumNumberOfOffers;
     }
 
     @Override
@@ -206,39 +139,47 @@ public class Buyer extends Agent {
         return buyerPrice;
     }
 
+    private List<Ticket> filterCatalogue() {
+        // on analyse uniquement les nouveaux tickets du catalogue
+        List<Ticket> addedTickets = new ArrayList<>(catalogue.stream().toList());;
+        addedTickets.removeAll(this.seenTickets);
+
+        // on vérifie si des providers préférées ont ajoutés des tickets au catalogue (on négocie d'abord avec eux)
+        List<Ticket> preferredTickets = addedTickets.stream().filter(ticket -> this.preferredProvidersID.contains(ticket.getProvider().getId())).toList();
+
+        if(!preferredTickets.isEmpty()) {
+            addedTickets = preferredTickets;
+        }
+
+        return addedTickets;
+    }
+
+    private boolean checkIfPreferredNegotiationRunning(Negotiation n) {
+        return n.getStatus() == NegotiationStatus.RUNNING && this.preferredProvidersID.contains(n.getProvider().getId());
+    }
+
     @Override
     public void run() {
-        List<Ticket> seenTickets = new ArrayList<>();
-        List<Ticket> addedTickets;
         List<Negotiation> negotiations = new ArrayList<>();
-
-        List<Ticket> preferredTickets;
-
-        boolean preferredNegotiations = false;
+        boolean preferredNegotiationsRunning = false;
 
         while (isAvailable()) {
 
+            LocalDate currentDate = Timer.getDate();
+
             // Si la date actuelle dépasse la date limite, l'acheteur n'est plus disponible
-            if (Timer.getDate().isAfter(this.latestBuyingDate)) {
+            if (currentDate.isAfter(this.latestBuyingDate)) {
                 System.out.println("Recherche de ticket (" + this.getName() + ") : la date actuelle (" + Utils.formatDate(Timer.getDate()) + ") a dépassé la date limite d'achat (" + Utils.formatDate(this.latestBuyingDate) + ").");
                 setAvailable(false);
                 break;
             }
 
-            // on analyse uniquement les nouveaux tickets du catalogue
-            addedTickets = new ArrayList<>(catalogue.stream().toList());
-            addedTickets.removeAll(seenTickets);
-
-            // on vérifie si des providers préférées ont ajoutés des tickets au catalogue (on négocie d'abord avec eux)
-            preferredTickets = addedTickets.stream().filter(ticket -> this.preferredProvidersID.contains(ticket.getProvider().getId())).toList();
-
-            if(!preferredTickets.isEmpty()) {
-                addedTickets = preferredTickets;
-            }
+            // on analyse et on filtre les nouveaux tickets du catalogue
+            List<Ticket> filteredTickets = filterCatalogue();
 
             // avant de commencer de nouvelles négotiations, on vérifie qu'une négotiation avec un fournisseur préféré n'est pas en cours
-            if (!preferredNegotiations) {
-                for (Ticket ticket : addedTickets) {
+            if (!preferredNegotiationsRunning) {
+                for (Ticket ticket : filteredTickets) {
                     Response buyerResponse = this.checkConstraint(ticket);
 
                     seenTickets.add(ticket);
@@ -254,21 +195,11 @@ public class Buyer extends Agent {
                 }
             }
 
-            // on réinitialise cette variable avant de vérifier à nouveau si une négotiation avec un fournisseur préféré est en cours
-            preferredNegotiations = false;
-
-            // on vérifie l'état des négociations en cours
-            for (Iterator<Negotiation> iterator = negotiations.iterator(); iterator.hasNext(); ) {
-                Negotiation n = iterator.next();
-                // si une négociation a échoué ou réussi
-                if (n.getStatus() != NegotiationStatus.RUNNING) {
-                    // on retire la negociation de la liste des négociations en cours.
-                    iterator.remove();
-                }
-
-                // on vérifie si une négotiation avec un fournisseur préféré est en cours
-                if (n.getStatus() == NegotiationStatus.RUNNING && this.preferredProvidersID.contains(n.getProvider().getId())) {
-                    preferredNegotiations = true;
+            // on vérifie si une négotiation avec un fournisseur préféré est en cours
+            for (Negotiation n : negotiations) {
+                preferredNegotiationsRunning = checkIfPreferredNegotiationRunning(n);
+                if (preferredNegotiationsRunning) {
+                    break;
                 }
             }
         }
