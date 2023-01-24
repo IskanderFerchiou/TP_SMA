@@ -100,6 +100,7 @@ public class Buyer extends Agent {
         return Response.VALID_CONSTRAINTS;
     }
 
+    @Override
     public int calculatePrice(Negotiation negotiation) {
         int buyerPrice;
         List<Offer> history = this.getOffers(negotiation);

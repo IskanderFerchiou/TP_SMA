@@ -5,9 +5,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class Agent implements Runnable  {
     public abstract Response checkConstraint(Offer offer);
+    public abstract int calculatePrice(Negotiation negotiation);
     private final Inbox chat;
     protected BlockingQueue<Ticket> catalogue;
-
     protected NegotiationStrat strat;
 
     public Agent() {
