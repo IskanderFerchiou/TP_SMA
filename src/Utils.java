@@ -1,5 +1,4 @@
 import java.io.*;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -34,7 +33,7 @@ public class Utils {
         return providers;
     }
 
-    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) throws IOException, ParseException {
+    public static List<Buyer> instantiateBuyers(String filename, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) throws IOException {
         File file = new File("datasets/" + filename);
         List<Buyer> buyers = new ArrayList<>();
         DateTimeFormatter  df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -75,7 +74,7 @@ public class Utils {
         return buyers;
     }
 
-    public static void instantiateTickets(String filename, List<Provider> providers) throws IOException, ParseException {
+    public static void instantiateTickets(String filename, List<Provider> providers) throws IOException {
         File file = new File("datasets/" + filename);
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         if (file.exists()) {

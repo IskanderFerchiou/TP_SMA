@@ -3,7 +3,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Ticket {
-    private Provider provider;
+    private final Provider provider;
     private final String departurePlace;
     private final String arrivalPlace;
 
@@ -27,10 +27,6 @@ public class Ticket {
 
     public Provider getProvider() {
         return provider;
-    }
-
-    public void setProvider(Provider provider) {
-        this.provider = provider;
     }
 
     public String getArrivalPlace() {

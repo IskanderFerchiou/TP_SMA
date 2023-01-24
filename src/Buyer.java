@@ -74,6 +74,7 @@ public class Buyer extends Agent {
     }
 
     // vérification des contraintes DURANT la négociation
+    @Override
     public Response checkConstraint(Offer offer) {
         if (offer.getOfferDate().isAfter(this.latestBuyingDate)) {
             return Response.DATE_TOO_LATE;
@@ -141,7 +142,7 @@ public class Buyer extends Agent {
 
     private List<Ticket> filterCatalogue() {
         // on analyse uniquement les nouveaux tickets du catalogue
-        List<Ticket> addedTickets = new ArrayList<>(catalogue.stream().toList());;
+        List<Ticket> addedTickets = new ArrayList<>(catalogue.stream().toList());
         addedTickets.removeAll(this.seenTickets);
 
         // on vérifie si des providers préférées ont ajoutés des tickets au catalogue (on négocie d'abord avec eux)

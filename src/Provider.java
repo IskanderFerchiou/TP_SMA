@@ -4,7 +4,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class Provider extends Agent {
     private final List<Ticket> tickets; // les billets à vendre
-    private NegotiationStrat strat;
+    private final NegotiationStrat strat;
     private final Integer id;
 
     public Provider(Integer id, BlockingQueue<Ticket> catalogue, NegotiationStrat strat) {
@@ -28,6 +28,7 @@ public class Provider extends Agent {
         catalogue.remove(ticket);
     }
 
+    @Override
     public Response checkConstraint(Offer offer) {
         Ticket ticket = offer.getTicket();
         if (offer.getOfferDate().isAfter(ticket.getLatestProvidingDate())) {
