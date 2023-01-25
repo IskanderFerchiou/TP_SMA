@@ -47,11 +47,11 @@ public class Provider extends Agent {
         Ticket ticket = negotiation.getTicket();
 
         // marge de négociation divisé par 5 pour temporiser la négociation
-        double coefNegotiation = ((double)(ticket.getPreferedProvidingPrice() - ticket.getMinimumProvidingPrice()) / ticket.getPreferedProvidingPrice()) / 5;
+        double coefNegotiation = ((double)(ticket.getPreferredProvidingPrice() - ticket.getMinimumProvidingPrice()) / ticket.getPreferredProvidingPrice()) / 5;
 
         // si le fournisseur n'a toujours pas fait de contre-offre
         if (history.size() <= 1) {
-            providerPrice = ticket.getPreferedProvidingPrice() - (int)(ticket.getPreferedProvidingPrice() * coefNegotiation);
+            providerPrice = ticket.getPreferredProvidingPrice() - (int)(ticket.getPreferredProvidingPrice() * coefNegotiation);
         // A partir de la deuxième offre : on diminue le prix en fonction de la dernière offre du fournisseur et de la stratégie
         } else {
             Offer lastSentOffer = history.get(history.size() - 2);

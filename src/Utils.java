@@ -9,7 +9,7 @@ public class Utils {
     static final Object lock = new Object(); // shared object to synchronize on
 
     public static String formatDate(LocalDate date) {
-        DateTimeFormatter  df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return df.format(date);
     }
 
@@ -74,9 +74,11 @@ public class Utils {
         return buyers;
     }
 
-    public static void instantiateTickets(String filename, List<Provider> providers) throws IOException {
+    public static LocalDate instantiateTickets(String filename, List<Provider> providers) throws IOException {
         File file = new File("datasets/" + filename);
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate earliestPreferredProvidingDate = LocalDate.MAX;
+
         if (file.exists()) {
             FileReader reader = new FileReader(file);
             BufferedReader br = new BufferedReader(reader);
@@ -91,13 +93,19 @@ public class Utils {
                 spllitedLine = line.split(";");
                 Provider provider = providers.get(Integer.parseInt(spllitedLine[6]));
 
+                LocalDate preferredProvidingDate = LocalDate.parse(spllitedLine[5], df);
+
+                if (preferredProvidingDate.isBefore(earliestPreferredProvidingDate)) {
+                    earliestPreferredProvidingDate = preferredProvidingDate;
+                }
+
                 Ticket ticket = new Ticket(
                         provider, // provider
                         spllitedLine[0], // departurePlace
                         spllitedLine[1], // arrivalPlace
                         Integer.parseInt(spllitedLine[3]), // preferedProvidingPrice
                         Integer.parseInt(spllitedLine[2]), // minimumProvidingPrice
-                        LocalDate.parse(spllitedLine[5], df), // preferedProvidingDate
+                        preferredProvidingDate, // preferedProvidingDate
                         LocalDate.parse(spllitedLine[4], df) // latestProvidingDate
                 );
 
@@ -107,6 +115,6 @@ public class Utils {
             }
             System.out.println();
         }
-
+        return earliestPreferredProvidingDate;
     }
 }

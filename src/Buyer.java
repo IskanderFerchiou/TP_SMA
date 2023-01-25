@@ -90,11 +90,11 @@ public class Buyer extends Agent {
             return Response.WRONG_DESTINATION;
         if (rejectedProvidersID.contains(ticket.getProvider().getId()))
             return Response.PROVIDER_REJECTED;
-        if (ticket.getPreferedProvidingDate().isAfter(this.latestBuyingDate)) {
+        if (ticket.getPreferredProvidingDate().isAfter(this.latestBuyingDate)) {
             System.out.println("La date de mise en vente du ticket dépasse la dernière date d'achat possible (" + Utils.formatDate(this.getLatestBuyingDate()) + ")");
             return Response.DATE_TOO_LATE;
         }
-        if (ticket.getPreferedProvidingPrice() > this.maximumBudget)
+        if (ticket.getPreferredProvidingPrice() > this.maximumBudget)
             return Response.KEEP_NEGOCIATING;
 
         return Response.VALID_CONSTRAINTS;
@@ -106,7 +106,7 @@ public class Buyer extends Agent {
         List<Offer> history = this.getOffers(negotiation);
         Ticket ticket = negotiation.getTicket();
 
-        int min = Math.min(this.maximumBudget, ticket.getPreferedProvidingPrice());
+        int min = Math.min(this.maximumBudget, ticket.getPreferredProvidingPrice());
 
         // si l'acheteur n'a toujours pas fait de contre-offre, il propose en fonction du minimum entre le budget et le prix du ticket
         if (history.size() <= 1) {

@@ -8,20 +8,20 @@ public class Ticket {
     private final String arrivalPlace;
 
     // contraintes et préférences du vendeur
-    private final int preferedProvidingPrice; // prix désiré de vente du vendeur
+    private final int preferredProvidingPrice; // prix désiré de vente du vendeur
     private final int minimumProvidingPrice; // prix minimum de vente du vendeur
-    private final LocalDate preferedProvidingDate; // date de vente désirée du vendeur
+    private final LocalDate preferredProvidingDate; // date de vente désirée du vendeur
     private final LocalDate latestProvidingDate; // date de vente au plus tard du vendeur
 
     private final AtomicBoolean available  = new AtomicBoolean(true);
 
-    public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferedProvidingPrice, int minimumProvidingPrice, LocalDate preferedProvidingDate, LocalDate latestProvidingDate) {
+    public Ticket (Provider provider, String departurePlace, String arrivalPlace, int preferredProvidingPrice, int minimumProvidingPrice, LocalDate preferredProvidingDate, LocalDate latestProvidingDate) {
         this.provider = provider;
         this.departurePlace = departurePlace;
         this.arrivalPlace = arrivalPlace;
-        this.preferedProvidingPrice = preferedProvidingPrice;
+        this.preferredProvidingPrice = preferredProvidingPrice;
         this.minimumProvidingPrice = minimumProvidingPrice;
-        this.preferedProvidingDate = preferedProvidingDate;
+        this.preferredProvidingDate = preferredProvidingDate;
         this.latestProvidingDate = latestProvidingDate;
     }
 
@@ -33,16 +33,16 @@ public class Ticket {
         return arrivalPlace;
     }
 
-    public int getPreferedProvidingPrice() {
-        return this.preferedProvidingPrice;
+    public int getPreferredProvidingPrice() {
+        return this.preferredProvidingPrice;
     }
 
     public int getMinimumProvidingPrice() {
         return this.minimumProvidingPrice;
     }
 
-    public LocalDate getPreferedProvidingDate() {
-        return this.preferedProvidingDate;
+    public LocalDate getPreferredProvidingDate() {
+        return this.preferredProvidingDate;
     }
 
     public LocalDate getLatestProvidingDate() {
@@ -65,7 +65,7 @@ public class Ticket {
     public String toString() {
         return "Ticket (Fournisseur ID : " + provider.getId() +
                 ", Destination : " + arrivalPlace +
-                ", Prix de départ : " + preferedProvidingPrice +
+                ", Prix de départ : " + preferredProvidingPrice +
                 ", Prix minimum : " + minimumProvidingPrice +
                 ", Date limite de vente : " +  Utils.formatDate(latestProvidingDate) + ")";
     }
