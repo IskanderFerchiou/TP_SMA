@@ -115,8 +115,8 @@ public class Buyer extends Agent {
         } else {
             Offer lastSentOffer = history.get(history.size() - 2);
 
-            // marge de négociation divisé par 5 pour temporiser la négociation
-            double coefNegotiation = ((double)(min - lastSentOffer.getPrice()) / min) / 5;
+            // marge de négociation divisé par 4 pour temporiser la négociation
+            double coefNegotiation = ((double)(min - history.get(0).getPrice()) / (4 * min));
             // l'acheteur propose plus pour acheter le ticket si la date de vente limite approche
             if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(Timer.getDate()) < 2)
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
@@ -125,11 +125,6 @@ public class Buyer extends Agent {
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation-0.03 == 0 ? coefNegotiation : coefNegotiation-0.03));
             else
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice() * coefNegotiation);
-
-            // si la négociation va se terminer, le client tente le tout pour le tout et met son budget maximum
-            if (lastSentOffer.getOfferNumber() == this.maximumNumberOfOffers - 1) {
-                buyerPrice = min;
-            }
         }
 
 

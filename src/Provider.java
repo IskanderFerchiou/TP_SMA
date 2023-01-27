@@ -47,7 +47,7 @@ public class Provider extends Agent {
         Ticket ticket = negotiation.getTicket();
 
         // marge de négociation divisé par 5 pour temporiser la négociation
-        double coefNegotiation = ((double)(ticket.getPreferredProvidingPrice() - ticket.getMinimumProvidingPrice()) / ticket.getPreferredProvidingPrice()) / 5;
+        double coefNegotiation = ((double)(ticket.getPreferredProvidingPrice() - ticket.getMinimumProvidingPrice()) / (5 * ticket.getPreferredProvidingPrice()));
 
         // si le fournisseur n'a toujours pas fait de contre-offre
         if (history.size() <= 1) {
