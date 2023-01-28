@@ -76,15 +76,14 @@ public class Buyer extends Agent {
     // vérification des contraintes DURANT la négociation
     @Override
     public Response checkConstraint(Offer offer) {
-        if (offer.getOfferDate().isAfter(this.latestBuyingDate)) {
+        if (offer.getOfferDate().isAfter(this.latestBuyingDate))
             return Response.DATE_TOO_LATE;
-        }
         if (offer.getPrice() > this.maximumBudget || (double) offer.getOfferNumber() / this.maximumNumberOfOffers < 0.33)
             return Response.KEEP_NEGOCIATING;
         return Response.VALID_CONSTRAINTS;
     }
 
-    // vérrification des contraintes AVANT la négociation
+    // vérification des contraintes AVANT la négociation
     public Response checkConstraint(Ticket ticket) {
         if (!ticket.getArrivalPlace().equals(this.destination))
             return Response.WRONG_DESTINATION;
@@ -118,7 +117,7 @@ public class Buyer extends Agent {
             // marge de négociation divisé par 4 pour temporiser la négociation
             double coefNegotiation = ((double)(min - history.get(0).getPrice()) / (4 * min));
             // l'acheteur propose plus pour acheter le ticket si la date de vente limite approche
-            if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(Timer.getDate()) < 2)
+            if(this.strat == NegotiationStrat.REMAINING_TIME && ticket.getRemainingDays(Timer.getDate()) <= 2)
                 buyerPrice = lastSentOffer.getPrice() + (int)(lastSentOffer.getPrice()*(coefNegotiation+0.03));
             // l'acheteur propose moins si des tickets similaires se trouvent sur le marché
             else if(this.strat == NegotiationStrat.TICKETS_SIMILARITY && findSimilarTickets(ticket).size() >= 1)
