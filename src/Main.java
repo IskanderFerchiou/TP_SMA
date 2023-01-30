@@ -13,7 +13,7 @@ public class Main {
         BlockingQueue<Ticket> catalogue = new LinkedBlockingQueue<>();
 
         // Choix du scénario
-        String scenario = Scenario.NotEnoughTicketsN_1.getFileName();
+        String scenario = Scenario.PreferedProvidersN_N.getFileName();
         System.out.println("Scénario : " + scenario);
 
         // Choix de la stratégie de négociation

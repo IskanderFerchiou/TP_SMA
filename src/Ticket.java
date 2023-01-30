@@ -1,5 +1,6 @@
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Ticket {
@@ -74,7 +75,9 @@ public class Ticket {
         Ticket objTicket;
         if(obj instanceof Ticket) {
             objTicket = (Ticket) obj;
-            return objTicket.departurePlace.equals(this.departurePlace) && objTicket.arrivalPlace.equals(this.arrivalPlace);
+            return !Objects.equals(objTicket.provider.getId(), this.provider.getId())
+                    && objTicket.departurePlace.equals(this.departurePlace)
+                    && objTicket.arrivalPlace.equals(this.arrivalPlace);
         }
         return false;
     }

@@ -28,7 +28,6 @@ public abstract class Agent implements Runnable  {
             if(ticket.isSimilar(t))
                 similarTickets.add(t);
         }
-        similarTickets.remove(ticket);
         return similarTickets;
     }
 }
