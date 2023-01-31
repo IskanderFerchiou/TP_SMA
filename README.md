@@ -13,7 +13,7 @@ Ce projet a été réalisé à l'aide de l'environnement de développement Intel
 Pour tester notre application, il suffit de renseigner une version de Java valide dans les paramètres de l'IDE puis de choisir une stratégie de négociation
 et un scénario de test dans la classe Main avant d'éxecuter le code.
 
-Un rapport et une démonstration vidéo sont disponibles à la racine du projet.
+Un rapport est disponible à la racine du projet et une démonstration vidéo est accessible via le lien suivant : https://www.youtube.com/watch?v=fB4MjS0qHX8
 
 Pour plus d'informations, vous pouvez également contacter l'équipe projet aux adresses suivantes :
 - iskander.ferchiou@etu.univ-lyon1.fr
